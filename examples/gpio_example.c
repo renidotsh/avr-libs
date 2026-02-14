@@ -12,37 +12,37 @@
 int main(void)
 {
     /* --- Pin mode configuration --- */
-    GPIO_SetMode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);        /* LED           */
-    GPIO_SetMode(&DDRD, &PORTD, PD2, GPIO_INPUT_PULLUP);  /* Button        */
-    GPIO_SetMode(&DDRC, &PORTC, PC0, GPIO_INPUT);          /* Plain input   */
+    gpio_set_mode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);        /* LED           */
+    gpio_set_mode(&DDRD, &PORTD, PD2, GPIO_INPUT_PULLUP);  /* Button        */
+    gpio_set_mode(&DDRC, &PORTC, PC0, GPIO_INPUT);          /* Plain input   */
 
     /* --- Port-level bulk DDR --- */
-    GPIO_SetPortMode(&DDRC, 0x0F);  /* PC0-3 output, PC4-7 input */
+    gpio_set_port_mode(&DDRC, 0x0F);  /* PC0-3 output, PC4-7 input */
 
     /* --- Write & Read pin --- */
-    GPIO_WritePin(&PORTB, PB5, 1);          /* LED ON  */
+    gpio_write_pin(&PORTB, PB5, 1);          /* LED ON  */
     _delay_ms(500);
-    GPIO_WritePin(&PORTB, PB5, 0);          /* LED OFF */
+    gpio_write_pin(&PORTB, PB5, 0);          /* LED OFF */
     _delay_ms(500);
 
-    uint8_t btn = GPIO_ReadPin(&PIND, PD2); /* read button */
+    uint8_t btn = gpio_read_pin(&PIND, PD2); /* read button */
     (void)btn;
 
     /* --- Toggle pin --- */
-    GPIO_TogglePin(&PINB, PB5);
+    gpio_toggle_pin(&PINB, PB5);
     _delay_ms(250);
-    GPIO_TogglePin(&PINB, PB5);
+    gpio_toggle_pin(&PINB, PB5);
     _delay_ms(250);
 
     /* --- Whole-port write & read --- */
-    GPIO_WritePort(&PORTC, 0x0A);           /* pattern on lower nibble */
-    uint8_t port_val = GPIO_ReadPort(&PINC);
+    gpio_write_port(&PORTC, 0x0A);           /* pattern on lower nibble */
+    uint8_t port_val = gpio_read_port(&PINC);
     (void)port_val;
 
     /* --- Mask operations --- */
-    GPIO_SetMask(&PORTC, 0x05);             /* set  bits 0,2 */
-    GPIO_ClearMask(&PORTC, 0x0A);           /* clear bits 1,3 */
-    GPIO_ToggleMask(&PINC, 0x0F);           /* toggle lower nibble */
+    gpio_set_mask(&PORTC, 0x05);             /* set  bits 0,2 */
+    gpio_clear_mask(&PORTC, 0x0A);           /* clear bits 1,3 */
+    gpio_toggle_mask(&PINC, 0x0F);           /* toggle lower nibble */
 
     /* --- Macro-based direct access --- */
     GPIO_SET_HIGH(PORTB, PB5);
@@ -60,12 +60,12 @@ int main(void)
 
     /* Main loop: blink LED + read button */
     while (1) {
-        if (GPIO_ReadPin(&PIND, PD2) == 0) {
-            GPIO_WritePort(&PORTC, 0x0F);
+        if (gpio_read_pin(&PIND, PD2) == 0) {
+            gpio_write_port(&PORTC, 0x0F);
         } else {
-            GPIO_ClearMask(&PORTC, 0x0F);
+            gpio_clear_mask(&PORTC, 0x0F);
         }
-        GPIO_TogglePin(&PINB, PB5);
+        gpio_toggle_pin(&PINB, PB5);
         _delay_ms(250);
     }
     return 0;

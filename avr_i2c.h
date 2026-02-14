@@ -25,9 +25,9 @@
  *   #include "avr_i2c.h"
  *
  *   int main(void) {
- *       I2C_Init(I2C_SPEED_100K);
+ *       i2c_init(I2C_SPEED_100K);
  *       uint8_t val;
- *       I2C_ReadRegister(0x68, 0x75, &val); // WHO_AM_I
+ *       i2c_read_register(0x68, 0x75, &val); // WHO_AM_I
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -86,59 +86,59 @@ typedef enum {
  * @brief  Initialise TWI hardware.
  * @param  speed  SCL frequency (I2C_SPEED_100K or I2C_SPEED_400K)
  */
-void I2C_Init(i2c_speed_e speed);
+void i2c_init(i2c_speed_e speed);
 
 /**
  * @brief  Issue a START condition.
  * @return I2C_OK on success
  */
-i2c_status_e I2C_Start(void);
+i2c_status_e i2c_start(void);
 
 /**
  * @brief  Issue a repeated START condition.
  * @return I2C_OK on success
  */
-i2c_status_e I2C_RepStart(void);
+i2c_status_e i2c_rep_start(void);
 
 /**
  * @brief  Issue a STOP condition.
  */
-void I2C_Stop(void);
+void i2c_stop(void);
 
 /**
  * @brief  Send SLA+W (7-bit address + write bit).
  * @param  addr  7-bit slave address
  * @return I2C_OK if ACK received
  */
-i2c_status_e I2C_SendAddress_W(uint8_t addr);
+i2c_status_e i2c_send_address_w(uint8_t addr);
 
 /**
  * @brief  Send SLA+R (7-bit address + read bit).
  * @param  addr  7-bit slave address
  * @return I2C_OK if ACK received
  */
-i2c_status_e I2C_SendAddress_R(uint8_t addr);
+i2c_status_e i2c_send_address_r(uint8_t addr);
 
 /**
  * @brief  Write a data byte on the bus.
  * @param  data  Byte to send
  * @return I2C_OK if ACK received
  */
-i2c_status_e I2C_WriteByte(uint8_t data);
+i2c_status_e i2c_write_byte(uint8_t data);
 
 /**
  * @brief  Read a byte and send ACK (more bytes to follow).
  * @param  data  Pointer to store received byte
  * @return I2C_OK on success
  */
-i2c_status_e I2C_ReadByte_ACK(uint8_t *data);
+i2c_status_e i2c_read_byte_ack(uint8_t *data);
 
 /**
  * @brief  Read a byte and send NACK (last byte).
  * @param  data  Pointer to store received byte
  * @return I2C_OK on success
  */
-i2c_status_e I2C_ReadByte_NACK(uint8_t *data);
+i2c_status_e i2c_read_byte_nack(uint8_t *data);
 
 /* ---- High-level convenience ---- */
 
@@ -149,7 +149,7 @@ i2c_status_e I2C_ReadByte_NACK(uint8_t *data);
  * @param  data  Byte to write
  * @return I2C status
  */
-i2c_status_e I2C_WriteRegister(uint8_t addr, uint8_t reg, uint8_t data);
+i2c_status_e i2c_write_register(uint8_t addr, uint8_t reg, uint8_t data);
 
 /**
  * @brief  Read a single byte from a device register.
@@ -158,7 +158,7 @@ i2c_status_e I2C_WriteRegister(uint8_t addr, uint8_t reg, uint8_t data);
  * @param  data  Pointer to store the read byte
  * @return I2C status
  */
-i2c_status_e I2C_ReadRegister(uint8_t addr, uint8_t reg, uint8_t *data);
+i2c_status_e i2c_read_register(uint8_t addr, uint8_t reg, uint8_t *data);
 
 /**
  * @brief  Write multiple bytes to consecutive registers.
@@ -168,7 +168,7 @@ i2c_status_e I2C_ReadRegister(uint8_t addr, uint8_t reg, uint8_t *data);
  * @param  len   Number of bytes
  * @return I2C status
  */
-i2c_status_e I2C_WriteRegisters(uint8_t addr, uint8_t reg,
+i2c_status_e i2c_write_registers(uint8_t addr, uint8_t reg,
                                 const uint8_t *buf, uint8_t len);
 
 /**
@@ -179,7 +179,7 @@ i2c_status_e I2C_WriteRegisters(uint8_t addr, uint8_t reg,
  * @param  len   Number of bytes
  * @return I2C status
  */
-i2c_status_e I2C_ReadRegisters(uint8_t addr, uint8_t reg,
+i2c_status_e i2c_read_registers(uint8_t addr, uint8_t reg,
                                uint8_t *buf, uint8_t len);
 
 /**
@@ -187,12 +187,12 @@ i2c_status_e I2C_ReadRegisters(uint8_t addr, uint8_t reg,
  * @param  found  Array to store found addresses (at least 128 bytes)
  * @return Number of devices found (0-127)
  */
-uint8_t I2C_Scan(uint8_t *found);
+uint8_t i2c_scan(uint8_t *found);
 
 /**
  * @brief  Disable the TWI peripheral.
  */
-void I2C_Disable(void);
+void i2c_disable(void);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_I2C_IMPLEMENTATION
@@ -217,7 +217,7 @@ static uint8_t _i2c_status(void)
     return TWSR & 0xF8;  /* mask prescaler bits */
 }
 
-void I2C_Init(i2c_speed_e speed)
+void i2c_init(i2c_speed_e speed)
 {
     /*
      * SCL frequency = F_CPU / (16 + 2 * TWBR * prescaler)
@@ -234,7 +234,7 @@ void I2C_Init(i2c_speed_e speed)
     TWCR = (1 << TWEN);
 }
 
-i2c_status_e I2C_Start(void)
+i2c_status_e i2c_start(void)
 {
     TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
     i2c_status_e s = _i2c_wait();
@@ -246,12 +246,12 @@ i2c_status_e I2C_Start(void)
     return I2C_OK;
 }
 
-i2c_status_e I2C_RepStart(void)
+i2c_status_e i2c_rep_start(void)
 {
-    return I2C_Start();   /* same HW sequence */
+    return i2c_start();   /* same HW sequence */
 }
 
-void I2C_Stop(void)
+void i2c_stop(void)
 {
     TWCR = (1 << TWINT) | (1 << TWSTO) | (1 << TWEN);
     /* TWINT is NOT set after STOP; wait for TWSTO to clear */
@@ -259,7 +259,7 @@ void I2C_Stop(void)
         ;
 }
 
-i2c_status_e I2C_SendAddress_W(uint8_t addr)
+i2c_status_e i2c_send_address_w(uint8_t addr)
 {
     TWDR = (addr << 1) | 0;   /* SLA+W */
     TWCR = (1 << TWINT) | (1 << TWEN);
@@ -271,7 +271,7 @@ i2c_status_e I2C_SendAddress_W(uint8_t addr)
     return I2C_OK;
 }
 
-i2c_status_e I2C_SendAddress_R(uint8_t addr)
+i2c_status_e i2c_send_address_r(uint8_t addr)
 {
     TWDR = (addr << 1) | 1;   /* SLA+R */
     TWCR = (1 << TWINT) | (1 << TWEN);
@@ -283,7 +283,7 @@ i2c_status_e I2C_SendAddress_R(uint8_t addr)
     return I2C_OK;
 }
 
-i2c_status_e I2C_WriteByte(uint8_t data)
+i2c_status_e i2c_write_byte(uint8_t data)
 {
     TWDR = data;
     TWCR = (1 << TWINT) | (1 << TWEN);
@@ -295,7 +295,7 @@ i2c_status_e I2C_WriteByte(uint8_t data)
     return I2C_OK;
 }
 
-i2c_status_e I2C_ReadByte_ACK(uint8_t *data)
+i2c_status_e i2c_read_byte_ack(uint8_t *data)
 {
     TWCR = (1 << TWINT) | (1 << TWEA) | (1 << TWEN);
     i2c_status_e s = _i2c_wait();
@@ -305,7 +305,7 @@ i2c_status_e I2C_ReadByte_ACK(uint8_t *data)
     return I2C_OK;
 }
 
-i2c_status_e I2C_ReadByte_NACK(uint8_t *data)
+i2c_status_e i2c_read_byte_nack(uint8_t *data)
 {
     TWCR = (1 << TWINT) | (1 << TWEN);   /* no TWEA */
     i2c_status_e s = _i2c_wait();
@@ -317,76 +317,76 @@ i2c_status_e I2C_ReadByte_NACK(uint8_t *data)
 
 /* ---- high-level ---- */
 
-i2c_status_e I2C_WriteRegister(uint8_t addr, uint8_t reg, uint8_t data)
+i2c_status_e i2c_write_register(uint8_t addr, uint8_t reg, uint8_t data)
 {
     i2c_status_e s;
-    if ((s = I2C_Start())          != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_W(addr)) != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_WriteByte(reg))      != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_WriteByte(data))     != I2C_OK) { I2C_Stop(); return s; }
-    I2C_Stop();
+    if ((s = i2c_start())          != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_w(addr)) != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_write_byte(reg))      != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_write_byte(data))     != I2C_OK) { i2c_stop(); return s; }
+    i2c_stop();
     return I2C_OK;
 }
 
-i2c_status_e I2C_ReadRegister(uint8_t addr, uint8_t reg, uint8_t *data)
+i2c_status_e i2c_read_register(uint8_t addr, uint8_t reg, uint8_t *data)
 {
     i2c_status_e s;
     /* Write register address */
-    if ((s = I2C_Start())            != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_W(addr)) != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_WriteByte(reg))      != I2C_OK) { I2C_Stop(); return s; }
+    if ((s = i2c_start())            != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_w(addr)) != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_write_byte(reg))      != I2C_OK) { i2c_stop(); return s; }
     /* Repeated start + read */
-    if ((s = I2C_RepStart())          != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_R(addr)) != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_ReadByte_NACK(data)) != I2C_OK) { I2C_Stop(); return s; }
-    I2C_Stop();
+    if ((s = i2c_rep_start())          != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_r(addr)) != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_read_byte_nack(data)) != I2C_OK) { i2c_stop(); return s; }
+    i2c_stop();
     return I2C_OK;
 }
 
-i2c_status_e I2C_WriteRegisters(uint8_t addr, uint8_t reg,
+i2c_status_e i2c_write_registers(uint8_t addr, uint8_t reg,
                                 const uint8_t *buf, uint8_t len)
 {
     i2c_status_e s;
-    if ((s = I2C_Start())            != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_W(addr)) != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_WriteByte(reg))      != I2C_OK) { I2C_Stop(); return s; }
+    if ((s = i2c_start())            != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_w(addr)) != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_write_byte(reg))      != I2C_OK) { i2c_stop(); return s; }
     for (uint8_t i = 0; i < len; i++) {
-        if ((s = I2C_WriteByte(buf[i])) != I2C_OK) { I2C_Stop(); return s; }
+        if ((s = i2c_write_byte(buf[i])) != I2C_OK) { i2c_stop(); return s; }
     }
-    I2C_Stop();
+    i2c_stop();
     return I2C_OK;
 }
 
-i2c_status_e I2C_ReadRegisters(uint8_t addr, uint8_t reg,
+i2c_status_e i2c_read_registers(uint8_t addr, uint8_t reg,
                                uint8_t *buf, uint8_t len)
 {
     i2c_status_e s;
-    if ((s = I2C_Start())            != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_W(addr)) != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_WriteByte(reg))      != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_RepStart())          != I2C_OK) { I2C_Stop(); return s; }
-    if ((s = I2C_SendAddress_R(addr)) != I2C_OK) { I2C_Stop(); return s; }
+    if ((s = i2c_start())            != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_w(addr)) != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_write_byte(reg))      != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_rep_start())          != I2C_OK) { i2c_stop(); return s; }
+    if ((s = i2c_send_address_r(addr)) != I2C_OK) { i2c_stop(); return s; }
 
     for (uint8_t i = 0; i < len; i++) {
         if (i < len - 1)
-            s = I2C_ReadByte_ACK(&buf[i]);
+            s = i2c_read_byte_ack(&buf[i]);
         else
-            s = I2C_ReadByte_NACK(&buf[i]);
-        if (s != I2C_OK) { I2C_Stop(); return s; }
+            s = i2c_read_byte_nack(&buf[i]);
+        if (s != I2C_OK) { i2c_stop(); return s; }
     }
-    I2C_Stop();
+    i2c_stop();
     return I2C_OK;
 }
 
-uint8_t I2C_Scan(uint8_t *found)
+uint8_t i2c_scan(uint8_t *found)
 {
     uint8_t count = 0;
     for (uint8_t addr = 1; addr < 128; addr++) {
-        i2c_status_e s = I2C_Start();
-        if (s != I2C_OK) { I2C_Stop(); continue; }
+        i2c_status_e s = i2c_start();
+        if (s != I2C_OK) { i2c_stop(); continue; }
 
-        s = I2C_SendAddress_W(addr);
-        I2C_Stop();
+        s = i2c_send_address_w(addr);
+        i2c_stop();
 
         if (s == I2C_OK) {
             if (found) found[count] = addr;
@@ -396,7 +396,7 @@ uint8_t I2C_Scan(uint8_t *found)
     return count;
 }
 
-void I2C_Disable(void)
+void i2c_disable(void)
 {
     TWCR = 0;
 }
@@ -416,38 +416,38 @@ void I2C_Disable(void)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
-    UART_SendString("I2C Demo\r\n");
+    uart_send_string("I2C Demo\r\n");
 
-    I2C_Init(I2C_SPEED_100K);
+    i2c_init(I2C_SPEED_100K);
 
     /* Bus scan */
     uint8_t devices[16];
-    uint8_t n = I2C_Scan(devices);
-    UART_SendString("Found ");
-    UART_PrintU16(n);
-    UART_SendString(" device(s)\r\n");
+    uint8_t n = i2c_scan(devices);
+    uart_send_string("Found ");
+    uart_print_u16(n);
+    uart_send_string(" device(s)\r\n");
     for (uint8_t i = 0; i < n; i++) {
-        UART_SendString("  0x");
-        UART_PrintHex8(devices[i]);
-        UART_SendString("\r\n");
+        uart_send_string("  0x");
+        uart_print_hex8(devices[i]);
+        uart_send_string("\r\n");
     }
 
     /* Read WHO_AM_I from MPU6050 (addr 0x68, reg 0x75) */
     uint8_t whoami;
-    if (I2C_ReadRegister(0x68, 0x75, &whoami) == I2C_OK) {
-        UART_SendString("WHO_AM_I: 0x");
-        UART_PrintHex8(whoami);
-        UART_SendString("\r\n");
+    if (i2c_read_register(0x68, 0x75, &whoami) == I2C_OK) {
+        uart_send_string("WHO_AM_I: 0x");
+        uart_print_hex8(whoami);
+        uart_send_string("\r\n");
     }
 
     /* Write config register */
-    I2C_WriteRegister(0x68, 0x6B, 0x00);  /* wake up MPU6050 */
+    i2c_write_register(0x68, 0x6B, 0x00);  /* wake up MPU6050 */
 
     /* Read 6 bytes (accel X/Y/Z) */
     uint8_t accel[6];
-    I2C_ReadRegisters(0x68, 0x3B, accel, 6);
+    i2c_read_registers(0x68, 0x3B, accel, 6);
 
     while (1) {
         _delay_ms(1000);

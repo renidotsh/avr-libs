@@ -23,78 +23,78 @@ void wdt_wakeup(void)
 int main(void)
 {
     /* Re-enable USART peripheral (in case PRR left set after reset) */
-    POWER_EnableAllPeripherals();
+    power_enable_all_peripherals();
 
-    UART_Init(9600);
+    uart_init(9600);
     sei();
-    UART_SendString("Power Demo\r\n");
+    uart_send_string("Power Demo\r\n");
 
     DDRB |= (1 << PB5);  /* LED */
 
     /* --- Disable unused peripherals --- */
-    POWER_DisablePeripheral(POWER_ADC);
-    POWER_DisablePeripheral(POWER_SPI);
-    POWER_DisablePeripheral(POWER_TWI);
-    POWER_DisablePeripheral(POWER_TIMER1);
-    POWER_DisablePeripheral(POWER_TIMER2);
+    power_disable_peripheral(POWER_ADC);
+    power_disable_peripheral(POWER_SPI);
+    power_disable_peripheral(POWER_TWI);
+    power_disable_peripheral(POWER_TIMER1);
+    power_disable_peripheral(POWER_TIMER2);
 
     /* --- Check peripheral status --- */
-    UART_SendString("ADC enabled: ");
-    UART_SendString(POWER_IsPeripheralEnabled(POWER_ADC) ? "yes" : "no");
-    UART_SendString("\r\n");
-    UART_SendString("USART enabled: ");
-    UART_SendString(POWER_IsPeripheralEnabled(POWER_USART) ? "yes" : "no");
-    UART_SendString("\r\n");
+    uart_send_string("ADC enabled: ");
+    uart_send_string(power_is_peripheral_enabled(POWER_ADC) ? "yes" : "no");
+    uart_send_string("\r\n");
+    uart_send_string("USART enabled: ");
+    uart_send_string(power_is_peripheral_enabled(POWER_USART) ? "yes" : "no");
+    uart_send_string("\r\n");
 
     /* --- Idle sleep demo (wakes on any interrupt, e.g. UART RX) --- */
-    UART_SendString("Idle sleep 2s...\r\n");
-    UART_FlushTx();
-    WDT_SetCallback(wdt_wakeup);
-    WDT_Enable(WDT_TIMEOUT_2S, WDT_MODE_INTERRUPT);
-    POWER_Sleep(POWER_SLEEP_IDLE);
-    WDT_Disable();
-    UART_SendString("Woke from Idle\r\n");
+    uart_send_string("Idle sleep 2s...\r\n");
+    uart_flush_tx();
+    wdt_set_callback(wdt_wakeup);
+    wdt_configure(WDT_TIMEOUT_2S, WDT_MODE_INTERRUPT);
+    power_sleep(POWER_SLEEP_IDLE);
+    wdt_off();
+    uart_send_string("Woke from Idle\r\n");
 
     /* --- SetSleepMode + EnterSleep separately --- */
-    UART_SendString("Power-down 2s...\r\n");
-    UART_FlushTx();
+    uart_send_string("Power-down 2s...\r\n");
+    uart_flush_tx();
     wakeup_flag = 0;
-    WDT_SetCallback(wdt_wakeup);
-    WDT_Enable(WDT_TIMEOUT_2S, WDT_MODE_INTERRUPT);
-    POWER_SetSleepMode(POWER_SLEEP_POWER_DOWN);
-    POWER_EnterSleep();
-    WDT_Disable();
-    UART_SendString("Woke from Power-down\r\n");
+    wdt_set_callback(wdt_wakeup);
+    wdt_configure(WDT_TIMEOUT_2S, WDT_MODE_INTERRUPT);
+    power_set_sleep_mode(POWER_SLEEP_POWER_DOWN);
+    power_enter_sleep();
+    wdt_off();
+    uart_send_string("Woke from Power-down\r\n");
 
     /* --- DeepSleep (BOD disabled) --- */
-    UART_SendString("Deep sleep 4s...\r\n");
-    UART_FlushTx();
+    uart_send_string("Deep sleep 4s...\r\n");
+    uart_flush_tx();
     wakeup_flag = 0;
-    WDT_SetCallback(wdt_wakeup);
-    WDT_Enable(WDT_TIMEOUT_4S, WDT_MODE_INTERRUPT);
-    POWER_DeepSleep();
-    WDT_Disable();
-    UART_SendString("Woke from Deep sleep\r\n");
+    wdt_set_callback(wdt_wakeup);
+    wdt_configure(WDT_TIMEOUT_4S, WDT_MODE_INTERRUPT);
+    power_deep_sleep();
+    wdt_off();
+    uart_send_string("Woke from Deep sleep\r\n");
 
     /* --- Re-enable peripherals --- */
-    POWER_EnablePeripheral(POWER_ADC);
-    UART_SendString("ADC re-enabled: ");
-    UART_SendString(POWER_IsPeripheralEnabled(POWER_ADC) ? "yes" : "no");
-    UART_SendString("\r\n");
+    power_enable_peripheral(POWER_ADC);
+    uart_send_string("ADC re-enabled: ");
+    uart_send_string(power_is_peripheral_enabled(POWER_ADC) ? "yes" : "no");
+    uart_send_string("\r\n");
 
     /* --- Enable all --- */
-    POWER_EnableAllPeripherals();
-    UART_SendString("All peripherals enabled\r\n");
+    power_enable_all_peripherals();
+    uart_send_string("All peripherals enabled\r\n");
 
     /* --- Disable all (then re-enable what we need) --- */
-    POWER_DisableAllPeripherals();
-    POWER_EnablePeripheral(POWER_USART);
-    POWER_EnablePeripheral(POWER_TIMER0);
-    UART_SendString("Selective enable OK\r\n");
+    power_disable_all_peripherals();
+    power_enable_peripheral(POWER_USART);
+    power_enable_peripheral(POWER_TIMER0);
+    uart_send_string("Selective enable OK\r\n");
 
-    POWER_EnableAllPeripherals();  /* restore for clean exit */
+    power_enable_all_peripherals();  /* restore for clean exit */
 
-    UART_SendString("Power demo complete\r\n");
+    uart_send_string("Power demo complete\r\n");
     while (1) {
         PINB |= (1 << PB5);
         _delay_ms(1000);

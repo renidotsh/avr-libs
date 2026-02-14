@@ -23,9 +23,9 @@
  *   #include "avr_spi.h"
  *
  *   int main(void) {
- *       SPI_MasterInit(SPI_MODE0, SPI_SPEED_DIV16);
+ *       spi_master_init(SPI_MODE0, SPI_SPEED_DIV16);
  *       SPI_CS_LOW(&PORTB, PB2);
- *       uint8_t rx = SPI_TransferByte(0xAA);
+ *       uint8_t rx = spi_transfer_byte(0xAA);
  *       SPI_CS_HIGH(&PORTB, PB2);
  *   }
  *
@@ -90,27 +90,27 @@ typedef void (*spi_callback_t)(uint8_t received);
  * @param  mode   SPI clock polarity / phase
  * @param  speed  Clock speed divider
  */
-void SPI_MasterInit(spi_mode_e mode, spi_speed_e speed);
+void spi_master_init(spi_mode_e mode, spi_speed_e speed);
 
 /**
  * @brief  Initialise SPI as slave with an optional receive callback.
  * @param  mode   SPI clock polarity / phase
  * @param  cb     Callback invoked from SPI_STC ISR on byte received (or NULL)
  */
-void SPI_SlaveInit(spi_mode_e mode, spi_callback_t cb);
+void spi_slave_init(spi_mode_e mode, spi_callback_t cb);
 
 /**
  * @brief  Set data order.
  * @param  order  SPI_MSB_FIRST or SPI_LSB_FIRST
  */
-void SPI_SetDataOrder(uint8_t order);
+void spi_set_data_order(uint8_t order);
 
 /**
  * @brief  Transfer a single byte (full-duplex).
  * @param  data  Byte to send
  * @return Byte received simultaneously
  */
-uint8_t SPI_TransferByte(uint8_t data);
+uint8_t spi_transfer_byte(uint8_t data);
 
 /**
  * @brief  Transfer a buffer (send tx_buf, received data stored in rx_buf).
@@ -118,24 +118,24 @@ uint8_t SPI_TransferByte(uint8_t data);
  * @param  rx_buf  Receive buffer (NULL to discard received data)
  * @param  len     Number of bytes
  */
-void SPI_TransferBuffer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t len);
+void spi_transfer_buffer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t len);
 
 /**
  * @brief  Send a byte without reading the response.
  * @param  data  Byte to send
  */
-void SPI_SendByte(uint8_t data);
+void spi_send_byte(uint8_t data);
 
 /**
  * @brief  Receive a byte (sends 0x00 as dummy).
  * @return Received byte
  */
-uint8_t SPI_ReceiveByte(void);
+uint8_t spi_receive_byte(void);
 
 /**
  * @brief  Disable the SPI peripheral.
  */
-void SPI_Disable(void);
+void spi_disable(void);
 
 /**
  * @brief  Configure a GPIO pin as chip-select output (set HIGH initially).
@@ -143,14 +143,14 @@ void SPI_Disable(void);
  * @param  port  Pointer to PORTx
  * @param  pin   Pin number
  */
-void SPI_CS_Init(volatile uint8_t *ddr, volatile uint8_t *port, uint8_t pin);
+void spi_cs_init(volatile uint8_t *ddr, volatile uint8_t *port, uint8_t pin);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_SPI_IMPLEMENTATION
 
 static volatile spi_callback_t _spi_slave_cb = (void*)0;
 
-void SPI_MasterInit(spi_mode_e mode, spi_speed_e speed)
+void spi_master_init(spi_mode_e mode, spi_speed_e speed)
 {
     /* MOSI, SCK, SS → output; MISO → input */
     SPI_DDR |= (1 << SPI_MOSI) | (1 << SPI_SCK) | (1 << SPI_SS);
@@ -171,7 +171,7 @@ void SPI_MasterInit(spi_mode_e mode, spi_speed_e speed)
         SPSR &= ~(1 << SPI2X);
 }
 
-void SPI_SlaveInit(spi_mode_e mode, spi_callback_t cb)
+void spi_slave_init(spi_mode_e mode, spi_callback_t cb)
 {
     /* MISO → output; MOSI, SCK, SS → input */
     SPI_DDR |=  (1 << SPI_MISO);
@@ -186,7 +186,7 @@ void SPI_SlaveInit(spi_mode_e mode, spi_callback_t cb)
         SPCR |= (1 << SPIE);  /* enable SPI interrupt */
 }
 
-void SPI_SetDataOrder(uint8_t order)
+void spi_set_data_order(uint8_t order)
 {
     if (order == SPI_LSB_FIRST)
         SPCR |= (1 << DORD);
@@ -194,7 +194,7 @@ void SPI_SetDataOrder(uint8_t order)
         SPCR &= ~(1 << DORD);
 }
 
-uint8_t SPI_TransferByte(uint8_t data)
+uint8_t spi_transfer_byte(uint8_t data)
 {
     SPDR = data;
     while (!(SPSR & (1 << SPIF)))
@@ -202,31 +202,31 @@ uint8_t SPI_TransferByte(uint8_t data)
     return SPDR;
 }
 
-void SPI_TransferBuffer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t len)
+void spi_transfer_buffer(const uint8_t *tx_buf, uint8_t *rx_buf, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++) {
         uint8_t tx = tx_buf ? tx_buf[i] : 0x00;
-        uint8_t rx = SPI_TransferByte(tx);
+        uint8_t rx = spi_transfer_byte(tx);
         if (rx_buf) rx_buf[i] = rx;
     }
 }
 
-void SPI_SendByte(uint8_t data)
+void spi_send_byte(uint8_t data)
 {
-    (void)SPI_TransferByte(data);
+    (void)spi_transfer_byte(data);
 }
 
-uint8_t SPI_ReceiveByte(void)
+uint8_t spi_receive_byte(void)
 {
-    return SPI_TransferByte(0x00);
+    return spi_transfer_byte(0x00);
 }
 
-void SPI_Disable(void)
+void spi_disable(void)
 {
     SPCR &= ~(1 << SPE);
 }
 
-void SPI_CS_Init(volatile uint8_t *ddr, volatile uint8_t *port, uint8_t pin)
+void spi_cs_init(volatile uint8_t *ddr, volatile uint8_t *port, uint8_t pin)
 {
     *ddr  |= (1 << pin);    /* output   */
     *port |= (1 << pin);    /* HIGH (inactive) */
@@ -250,19 +250,19 @@ ISR(SPI_STC_vect)
 /* Example: Send & receive bytes to a peripheral on PB2 as CS */
 int main(void)
 {
-    SPI_MasterInit(SPI_MODE0, SPI_SPEED_DIV16);
+    spi_master_init(SPI_MODE0, SPI_SPEED_DIV16);
 
     /* Additional CS pin (external device) */
-    SPI_CS_Init(&DDRB, &PORTB, PB2);
+    spi_cs_init(&DDRB, &PORTB, PB2);
 
     while (1) {
         SPI_CS_LOW(&PORTB, PB2);
 
         /* Write command byte, read status */
-        SPI_SendByte(0x9F);                    /* e.g. JEDEC ID cmd */
-        uint8_t mfr  = SPI_ReceiveByte();      /* Manufacturer */
-        uint8_t type = SPI_ReceiveByte();      /* Memory type  */
-        uint8_t cap  = SPI_ReceiveByte();      /* Capacity     */
+        spi_send_byte(0x9F);                    /* e.g. JEDEC ID cmd */
+        uint8_t mfr  = spi_receive_byte();      /* Manufacturer */
+        uint8_t type = spi_receive_byte();      /* Memory type  */
+        uint8_t cap  = spi_receive_byte();      /* Capacity     */
 
         SPI_CS_HIGH(&PORTB, PB2);
 

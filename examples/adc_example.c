@@ -20,71 +20,71 @@ void adc_callback(uint16_t result)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
-    UART_SendString("ADC Demo\r\n");
+    uart_send_string("ADC Demo\r\n");
 
     /* --- Init with AVCC ref, auto prescaler --- */
-    ADC_Init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
+    adc_init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
 
     /* --- Single-shot 10-bit read --- */
-    uint16_t ch0 = ADC_ReadChannel(ADC_CH0);
-    UART_SendString("CH0 (10-bit): ");
-    UART_PrintU16(ch0);
-    UART_SendString("\r\n");
+    uint16_t ch0 = adc_read_channel(ADC_CH0);
+    uart_send_string("CH0 (10-bit): ");
+    uart_print_u16(ch0);
+    uart_send_string("\r\n");
 
     /* --- 8-bit read --- */
-    uint8_t ch1_8 = ADC_ReadChannel8(ADC_CH1);
-    UART_SendString("CH1 (8-bit): ");
-    UART_PrintU16(ch1_8);
-    UART_SendString("\r\n");
+    uint8_t ch1_8 = adc_read_channel8(ADC_CH1);
+    uart_send_string("CH1 (8-bit): ");
+    uart_print_u16(ch1_8);
+    uart_send_string("\r\n");
 
     /* --- Averaged read --- */
-    uint16_t avg = ADC_ReadAverage(ADC_CH0, 16);
-    UART_SendString("CH0 avg(16): ");
-    UART_PrintU16(avg);
-    UART_SendString("\r\n");
+    uint16_t avg = adc_read_average(ADC_CH0, 16);
+    uart_send_string("CH0 avg(16): ");
+    uart_print_u16(avg);
+    uart_send_string("\r\n");
 
     /* --- Millivolt conversion --- */
-    uint16_t mv = ADC_ToMillivolts(avg, 5000);
-    UART_SendString("CH0 mV: ");
-    UART_PrintU16(mv);
-    UART_SendString("\r\n");
+    uint16_t mv = adc_to_millivolts(avg, 5000);
+    uart_send_string("CH0 mV: ");
+    uart_print_u16(mv);
+    uart_send_string("\r\n");
 
     /* --- Change reference voltage --- */
-    ADC_SetReference(ADC_REF_INTERNAL);
-    (void)ADC_ReadChannel(ADC_CH0);  /* discard first after ref change */
-    uint16_t int_ref = ADC_ReadChannel(ADC_CH0);
-    UART_SendString("CH0 (1.1V ref): ");
-    UART_PrintU16(int_ref);
-    UART_SendString("\r\n");
-    ADC_SetReference(ADC_REF_AVCC);  /* restore */
+    adc_set_reference(ADC_REF_INTERNAL);
+    (void)adc_read_channel(ADC_CH0);  /* discard first after ref change */
+    uint16_t int_ref = adc_read_channel(ADC_CH0);
+    uart_send_string("CH0 (1.1V ref): ");
+    uart_print_u16(int_ref);
+    uart_send_string("\r\n");
+    adc_set_reference(ADC_REF_AVCC);  /* restore */
 
     /* --- Read internal temperature --- */
-    uint16_t temp = ADC_ReadChannel(ADC_CH_TEMP);
-    UART_SendString("Temp raw: ");
-    UART_PrintU16(temp);
-    UART_SendString("\r\n");
+    uint16_t temp = adc_read_channel(ADC_CH_TEMP);
+    uart_send_string("Temp raw: ");
+    uart_print_u16(temp);
+    uart_send_string("\r\n");
 
     /* --- Free-running mode --- */
-    UART_SendString("Free-running on CH0:\r\n");
-    ADC_StartFreeRunning(ADC_CH0, adc_callback);
+    uart_send_string("Free-running on CH0:\r\n");
+    adc_start_free_running(ADC_CH0, adc_callback);
 
     for (uint8_t i = 0; i < 5; i++) {
         _delay_ms(500);
-        uint16_t r = ADC_GetLastResult();
-        UART_SendString("FR: ");
-        UART_PrintU16(r);
-        UART_SendString("\r\n");
+        uint16_t r = adc_get_last_result();
+        uart_send_string("FR: ");
+        uart_print_u16(r);
+        uart_send_string("\r\n");
     }
 
     /* --- Stop free-running --- */
-    ADC_StopFreeRunning();
-    UART_SendString("Free-run stopped\r\n");
+    adc_stop_free_running();
+    uart_send_string("Free-run stopped\r\n");
 
     /* --- Disable ADC --- */
-    ADC_Disable();
-    UART_SendString("ADC disabled\r\n");
+    adc_disable();
+    uart_send_string("ADC disabled\r\n");
 
     while (1) {
         _delay_ms(1000);

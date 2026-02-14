@@ -13,66 +13,66 @@
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
-    UART_SendString("SPI Demo\r\n");
+    uart_send_string("SPI Demo\r\n");
 
     /* --- Master init (Mode 0, fosc/16 = 1 MHz) --- */
-    SPI_MasterInit(SPI_MODE0, SPI_SPEED_DIV16);
+    spi_master_init(SPI_MODE0, SPI_SPEED_DIV16);
 
     /* --- CS pin setup (PB2) --- */
-    SPI_CS_Init(&DDRB, &PORTB, PB2);
+    spi_cs_init(&DDRB, &PORTB, PB2);
 
     /* --- Data order --- */
-    SPI_SetDataOrder(SPI_MSB_FIRST);
+    spi_set_data_order(SPI_MSB_FIRST);
 
     /* --- Single byte transfer --- */
     SPI_CS_LOW(&PORTB, PB2);
-    uint8_t rx = SPI_TransferByte(0x9F);  /* e.g. JEDEC ID command */
-    UART_SendString("TX:0x9F RX:0x");
-    UART_PrintHex8(rx);
-    UART_SendString("\r\n");
+    uint8_t rx = spi_transfer_byte(0x9F);  /* e.g. JEDEC ID command */
+    uart_send_string("TX:0x9F RX:0x");
+    uart_print_hex8(rx);
+    uart_send_string("\r\n");
 
     /* --- Read 3 response bytes --- */
-    uint8_t mfr  = SPI_ReceiveByte();
-    uint8_t type = SPI_ReceiveByte();
-    uint8_t cap  = SPI_ReceiveByte();
+    uint8_t mfr  = spi_receive_byte();
+    uint8_t type = spi_receive_byte();
+    uint8_t cap  = spi_receive_byte();
     SPI_CS_HIGH(&PORTB, PB2);
 
-    UART_SendString("MFR:0x");  UART_PrintHex8(mfr);
-    UART_SendString(" TYPE:0x"); UART_PrintHex8(type);
-    UART_SendString(" CAP:0x");  UART_PrintHex8(cap);
-    UART_SendString("\r\n");
+    uart_send_string("MFR:0x");  uart_print_hex8(mfr);
+    uart_send_string(" TYPE:0x"); uart_print_hex8(type);
+    uart_send_string(" CAP:0x");  uart_print_hex8(cap);
+    uart_send_string("\r\n");
 
     /* --- Buffer transfer --- */
     uint8_t tx_buf[] = {0x01, 0x02, 0x03, 0x04};
     uint8_t rx_buf[4];
     SPI_CS_LOW(&PORTB, PB2);
-    SPI_TransferBuffer(tx_buf, rx_buf, 4);
+    spi_transfer_buffer(tx_buf, rx_buf, 4);
     SPI_CS_HIGH(&PORTB, PB2);
 
-    UART_SendString("BufRX:");
+    uart_send_string("BufRX:");
     for (uint8_t i = 0; i < 4; i++) {
-        UART_SendString(" 0x");
-        UART_PrintHex8(rx_buf[i]);
+        uart_send_string(" 0x");
+        uart_print_hex8(rx_buf[i]);
     }
-    UART_SendString("\r\n");
+    uart_send_string("\r\n");
 
     /* --- SendByte (no read) --- */
     SPI_CS_LOW(&PORTB, PB2);
-    SPI_SendByte(0xAA);
+    spi_send_byte(0xAA);
     SPI_CS_HIGH(&PORTB, PB2);
 
     /* --- LSB-first mode --- */
-    SPI_SetDataOrder(SPI_LSB_FIRST);
+    spi_set_data_order(SPI_LSB_FIRST);
     SPI_CS_LOW(&PORTB, PB2);
-    SPI_SendByte(0x55);
+    spi_send_byte(0x55);
     SPI_CS_HIGH(&PORTB, PB2);
-    SPI_SetDataOrder(SPI_MSB_FIRST); /* restore */
+    spi_set_data_order(SPI_MSB_FIRST); /* restore */
 
     /* --- Disable SPI --- */
-    SPI_Disable();
-    UART_SendString("SPI disabled\r\n");
+    spi_disable();
+    uart_send_string("SPI disabled\r\n");
 
     while (1) {
         _delay_ms(1000);

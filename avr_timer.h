@@ -23,10 +23,10 @@
  *   #include "avr_timer.h"
  *
  *   int main(void) {
- *       TIMER_InitSystemTick();   // start 1 ms tick on Timer0
+ *       timer_init_system_tick();   // start 1 ms tick on Timer0
  *       sei();
  *       while (1) {
- *           TIMER_DelayMs(500);
+ *           timer_delay_ms(500);
  *       }
  *   }
  *
@@ -96,7 +96,7 @@ typedef void (*timer_callback_t)(void);
  * @param  prescale  Prescaler value (timer01_prescale_e)
  * @param  ocr_val   Output-compare value for CTC (ignored in NORMAL)
  */
-void TIMER0_Init(timer_mode_e mode, timer01_prescale_e prescale,
+void timer0_init(timer_mode_e mode, timer01_prescale_e prescale,
                  uint8_t ocr_val);
 
 /**
@@ -105,7 +105,7 @@ void TIMER0_Init(timer_mode_e mode, timer01_prescale_e prescale,
  * @param  prescale  Prescaler value (timer01_prescale_e)
  * @param  ocr_val   16-bit compare value for CTC (ignored in NORMAL)
  */
-void TIMER1_Init(timer_mode_e mode, timer01_prescale_e prescale,
+void timer1_init(timer_mode_e mode, timer01_prescale_e prescale,
                  uint16_t ocr_val);
 
 /**
@@ -114,7 +114,7 @@ void TIMER1_Init(timer_mode_e mode, timer01_prescale_e prescale,
  * @param  prescale  Prescaler value (timer2_prescale_e)
  * @param  ocr_val   Output-compare value for CTC (ignored in NORMAL)
  */
-void TIMER2_Init(timer_mode_e mode, timer2_prescale_e prescale,
+void timer2_init(timer_mode_e mode, timer2_prescale_e prescale,
                  uint8_t ocr_val);
 
 /**
@@ -122,7 +122,7 @@ void TIMER2_Init(timer_mode_e mode, timer2_prescale_e prescale,
  * @param  on_ovf   Callback for TIMER0_OVF  (NULL to disable)
  * @param  on_compa Callback for TIMER0_COMPA (NULL to disable)
  */
-void TIMER0_SetCallbacks(timer_callback_t on_ovf,
+void timer0_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa);
 
 /**
@@ -130,7 +130,7 @@ void TIMER0_SetCallbacks(timer_callback_t on_ovf,
  * @param  on_ovf   Callback for TIMER1_OVF  (NULL to disable)
  * @param  on_compa Callback for TIMER1_COMPA (NULL to disable)
  */
-void TIMER1_SetCallbacks(timer_callback_t on_ovf,
+void timer1_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa);
 
 /**
@@ -138,7 +138,7 @@ void TIMER1_SetCallbacks(timer_callback_t on_ovf,
  * @param  on_ovf   Callback for TIMER2_OVF  (NULL to disable)
  * @param  on_compa Callback for TIMER2_COMPA (NULL to disable)
  */
-void TIMER2_SetCallbacks(timer_callback_t on_ovf,
+void timer2_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa);
 
 /**
@@ -147,33 +147,33 @@ void TIMER2_SetCallbacks(timer_callback_t on_ovf,
  *         OCR0A = (F_CPU / 64 / 1000) - 1  ⟶ 249 @ 16 MHz.
  * @note   Enables Timer0 COMPA interrupt.  Call sei() afterwards.
  */
-void TIMER_InitSystemTick(void);
+void timer_init_system_tick(void);
 
 /**
- * @brief  Return the number of milliseconds since TIMER_InitSystemTick().
+ * @brief  Return the number of milliseconds since timer_init_system_tick().
  * @return 32-bit millisecond counter (wraps after ~49.7 days).
  */
-uint32_t TIMER_GetMillis(void);
+uint32_t timer_get_millis(void);
 
 /**
  * @brief  Blocking delay using the system-tick counter.
  * @param  ms  Delay in milliseconds.
- * @note   Requires TIMER_InitSystemTick() + sei() beforehand.
+ * @note   Requires timer_init_system_tick() + sei() beforehand.
  */
-void TIMER_DelayMs(uint16_t ms);
+void timer_delay_ms(uint16_t ms);
 
 /**
  * @brief  Blocking microsecond delay using Timer1 in CTC mode.
  * @param  us  Delay in microseconds (1 – 65535).
  * @note   Temporarily reconfigures Timer1.  Restores original state.
  */
-void TIMER_DelayUs(uint16_t us);
+void timer_delay_us(uint16_t us);
 
 /**
  * @brief  Stop a timer (clear its clock-select bits).
  * @param  timer_id  TIMER_0, TIMER_1, or TIMER_2
  */
-void TIMER_Stop(uint8_t timer_id);
+void timer_stop(uint8_t timer_id);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_TIMER_IMPLEMENTATION
@@ -191,7 +191,7 @@ static volatile uint32_t _sys_millis = 0;
 
 /* ---------- Timer0 ---------- */
 
-void TIMER0_Init(timer_mode_e mode, timer01_prescale_e prescale,
+void timer0_init(timer_mode_e mode, timer01_prescale_e prescale,
                  uint8_t ocr_val)
 {
     TCCR0A = 0;
@@ -206,7 +206,7 @@ void TIMER0_Init(timer_mode_e mode, timer01_prescale_e prescale,
     TCCR0B |= (prescale & 0x07);           /* clock-select bits  */
 }
 
-void TIMER0_SetCallbacks(timer_callback_t on_ovf,
+void timer0_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa)
 {
     _t0_ovf_cb  = on_ovf;
@@ -235,7 +235,7 @@ ISR(TIMER0_COMPA_vect)
 
 /* ---------- Timer1 ---------- */
 
-void TIMER1_Init(timer_mode_e mode, timer01_prescale_e prescale,
+void timer1_init(timer_mode_e mode, timer01_prescale_e prescale,
                  uint16_t ocr_val)
 {
     TCCR1A = 0;
@@ -250,7 +250,7 @@ void TIMER1_Init(timer_mode_e mode, timer01_prescale_e prescale,
     TCCR1B |= (prescale & 0x07);
 }
 
-void TIMER1_SetCallbacks(timer_callback_t on_ovf,
+void timer1_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa)
 {
     _t1_ovf_cb  = on_ovf;
@@ -279,7 +279,7 @@ ISR(TIMER1_COMPA_vect)
 
 /* ---------- Timer2 ---------- */
 
-void TIMER2_Init(timer_mode_e mode, timer2_prescale_e prescale,
+void timer2_init(timer_mode_e mode, timer2_prescale_e prescale,
                  uint8_t ocr_val)
 {
     TCCR2A = 0;
@@ -294,7 +294,7 @@ void TIMER2_Init(timer_mode_e mode, timer2_prescale_e prescale,
     TCCR2B |= (prescale & 0x07);
 }
 
-void TIMER2_SetCallbacks(timer_callback_t on_ovf,
+void timer2_set_callbacks(timer_callback_t on_ovf,
                          timer_callback_t on_compa)
 {
     _t2_ovf_cb  = on_ovf;
@@ -328,19 +328,19 @@ static void _sys_tick_handler(void)
     _sys_millis++;
 }
 
-void TIMER_InitSystemTick(void)
+void timer_init_system_tick(void)
 {
     /*
      * Timer0 CTC mode, prescaler 64
      * OCR0A = (F_CPU / 64 / 1000) - 1
      *       = (16000000 / 64 / 1000) - 1 = 249 @ 16 MHz
      */
-    TIMER0_Init(TIMER_MODE_CTC, TIMER01_PRESCALE_64,
+    timer0_init(TIMER_MODE_CTC, TIMER01_PRESCALE_64,
                 (uint8_t)((F_CPU / 64UL / 1000UL) - 1));
-    TIMER0_SetCallbacks(/*ovf=*/0, /*compa=*/_sys_tick_handler);
+    timer0_set_callbacks(/*ovf=*/0, /*compa=*/_sys_tick_handler);
 }
 
-uint32_t TIMER_GetMillis(void)
+uint32_t timer_get_millis(void)
 {
     uint32_t ms;
     uint8_t sreg = SREG;
@@ -350,14 +350,14 @@ uint32_t TIMER_GetMillis(void)
     return ms;
 }
 
-void TIMER_DelayMs(uint16_t ms)
+void timer_delay_ms(uint16_t ms)
 {
-    uint32_t start = TIMER_GetMillis();
-    while ((TIMER_GetMillis() - start) < ms)
+    uint32_t start = timer_get_millis();
+    while ((timer_get_millis() - start) < ms)
         ;  /* busy-wait */
 }
 
-void TIMER_DelayUs(uint16_t us)
+void timer_delay_us(uint16_t us)
 {
     /*
      * Use Timer1 in CTC mode, prescaler 1.
@@ -399,7 +399,7 @@ void TIMER_DelayUs(uint16_t us)
     TIMSK1 = saved_timsk1;
 }
 
-void TIMER_Stop(uint8_t timer_id)
+void timer_stop(uint8_t timer_id)
 {
     switch (timer_id) {
         case TIMER_0:
@@ -435,16 +435,16 @@ int main(void)
     DDRB |= (1 << PB5);   /* PB5 output */
 
     /* 1 ms system tick */
-    TIMER_InitSystemTick();
+    timer_init_system_tick();
     sei();
 
     /* Timer2 CTC: callback every ~4 ms →
        OCR2A = 249, prescaler 256 → 4.096 ms @ 16 MHz */
-    TIMER2_Init(TIMER_MODE_CTC, TIMER2_PRESCALE_256, 249);
-    TIMER2_SetCallbacks(0, blink_callback);
+    timer2_init(TIMER_MODE_CTC, TIMER2_PRESCALE_256, 249);
+    timer2_set_callbacks(0, blink_callback);
 
     while (1) {
-        TIMER_DelayMs(1000);
+        timer_delay_ms(1000);
         /* actions every second */
     }
     return 0;

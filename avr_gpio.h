@@ -23,8 +23,8 @@
  *   #include "avr_gpio.h"
  *
  *   int main(void) {
- *       GPIO_SetMode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);
- *       GPIO_WritePin(&PORTB, PB5, 1);
+ *       gpio_set_mode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);
+ *       gpio_write_pin(&PORTB, PB5, 1);
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -84,7 +84,7 @@
  * @param  mode  GPIO_INPUT, GPIO_OUTPUT, or GPIO_INPUT_PULLUP
  * @note   Performs atomic read-modify-write (interrupts briefly disabled).
  */
-void GPIO_SetMode(volatile uint8_t *ddr, volatile uint8_t *port,
+void gpio_set_mode(volatile uint8_t *ddr, volatile uint8_t *port,
                   uint8_t pin, uint8_t mode);
 
 /**
@@ -93,7 +93,7 @@ void GPIO_SetMode(volatile uint8_t *ddr, volatile uint8_t *port,
  * @param  pin   Pin number 0-7
  * @param  value Non-zero → HIGH, zero → LOW
  */
-void GPIO_WritePin(volatile uint8_t *port, uint8_t pin, uint8_t value);
+void gpio_write_pin(volatile uint8_t *port, uint8_t pin, uint8_t value);
 
 /**
  * @brief  Read the current logic level of a pin.
@@ -101,61 +101,61 @@ void GPIO_WritePin(volatile uint8_t *port, uint8_t pin, uint8_t value);
  * @param  pin   Pin number 0-7
  * @return 1 if HIGH, 0 if LOW
  */
-uint8_t GPIO_ReadPin(volatile uint8_t *pinr, uint8_t pin);
+uint8_t gpio_read_pin(volatile uint8_t *pinr, uint8_t pin);
 
 /**
  * @brief  Toggle an output pin (uses PINx write trick on modern AVR).
  * @param  pinr  Pointer to PINx register
  * @param  pin   Pin number 0-7
  */
-void GPIO_TogglePin(volatile uint8_t *pinr, uint8_t pin);
+void gpio_toggle_pin(volatile uint8_t *pinr, uint8_t pin);
 
 /**
  * @brief  Write an entire 8-bit value to a port.
  * @param  port  Pointer to PORTx register
  * @param  value 8-bit value to write
  */
-void GPIO_WritePort(volatile uint8_t *port, uint8_t value);
+void gpio_write_port(volatile uint8_t *port, uint8_t value);
 
 /**
  * @brief  Read an entire 8-bit port input register.
  * @param  pinr  Pointer to PINx register
  * @return 8-bit port value
  */
-uint8_t GPIO_ReadPort(volatile uint8_t *pinr);
+uint8_t gpio_read_port(volatile uint8_t *pinr);
 
 /**
  * @brief  Set the direction of every pin in a port at once.
  * @param  ddr   Pointer to DDRx register
  * @param  mask  Bitmask – 1 = output, 0 = input
  */
-void GPIO_SetPortMode(volatile uint8_t *ddr, uint8_t mask);
+void gpio_set_port_mode(volatile uint8_t *ddr, uint8_t mask);
 
 /**
  * @brief  Atomically set multiple pins HIGH using a bitmask.
  * @param  port  Pointer to PORTx register
  * @param  mask  Bitmask of pins to set
  */
-void GPIO_SetMask(volatile uint8_t *port, uint8_t mask);
+void gpio_set_mask(volatile uint8_t *port, uint8_t mask);
 
 /**
  * @brief  Atomically clear multiple pins LOW using a bitmask.
  * @param  port  Pointer to PORTx register
  * @param  mask  Bitmask of pins to clear
  */
-void GPIO_ClearMask(volatile uint8_t *port, uint8_t mask);
+void gpio_clear_mask(volatile uint8_t *port, uint8_t mask);
 
 /**
  * @brief  Toggle multiple pins at once.
  * @param  pinr  Pointer to PINx register
  * @param  mask  Bitmask of pins to toggle
  */
-void GPIO_ToggleMask(volatile uint8_t *pinr, uint8_t mask);
+void gpio_toggle_mask(volatile uint8_t *pinr, uint8_t mask);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_GPIO_IMPLEMENTATION
 
-void GPIO_SetMode(volatile uint8_t *ddr, volatile uint8_t *port,
+void gpio_set_mode(volatile uint8_t *ddr, volatile uint8_t *port,
                   uint8_t pin, uint8_t mode)
 {
     GPIO_ATOMIC_BLOCK(
@@ -176,7 +176,7 @@ void GPIO_SetMode(volatile uint8_t *ddr, volatile uint8_t *port,
     );
 }
 
-void GPIO_WritePin(volatile uint8_t *port, uint8_t pin, uint8_t value)
+void gpio_write_pin(volatile uint8_t *port, uint8_t pin, uint8_t value)
 {
     GPIO_ATOMIC_BLOCK(
         if (value)
@@ -186,44 +186,44 @@ void GPIO_WritePin(volatile uint8_t *port, uint8_t pin, uint8_t value)
     );
 }
 
-uint8_t GPIO_ReadPin(volatile uint8_t *pinr, uint8_t pin)
+uint8_t gpio_read_pin(volatile uint8_t *pinr, uint8_t pin)
 {
     return (*pinr >> pin) & 1U;
 }
 
-void GPIO_TogglePin(volatile uint8_t *pinr, uint8_t pin)
+void gpio_toggle_pin(volatile uint8_t *pinr, uint8_t pin)
 {
     /* Writing 1 to a PINx bit toggles the corresponding PORTx bit
        on ATmega48A/PA/88A/PA/168A/PA/328/P and many newer AVRs. */
     *pinr = (1U << pin);
 }
 
-void GPIO_WritePort(volatile uint8_t *port, uint8_t value)
+void gpio_write_port(volatile uint8_t *port, uint8_t value)
 {
     *port = value;
 }
 
-uint8_t GPIO_ReadPort(volatile uint8_t *pinr)
+uint8_t gpio_read_port(volatile uint8_t *pinr)
 {
     return *pinr;
 }
 
-void GPIO_SetPortMode(volatile uint8_t *ddr, uint8_t mask)
+void gpio_set_port_mode(volatile uint8_t *ddr, uint8_t mask)
 {
     *ddr = mask;
 }
 
-void GPIO_SetMask(volatile uint8_t *port, uint8_t mask)
+void gpio_set_mask(volatile uint8_t *port, uint8_t mask)
 {
     GPIO_ATOMIC_BLOCK( *port |= mask; );
 }
 
-void GPIO_ClearMask(volatile uint8_t *port, uint8_t mask)
+void gpio_clear_mask(volatile uint8_t *port, uint8_t mask)
 {
     GPIO_ATOMIC_BLOCK( *port &= ~mask; );
 }
 
-void GPIO_ToggleMask(volatile uint8_t *pinr, uint8_t mask)
+void gpio_toggle_mask(volatile uint8_t *pinr, uint8_t mask)
 {
     *pinr = mask;   /* PINx write trick – toggles corresponding bits */
 }
@@ -244,23 +244,23 @@ void GPIO_ToggleMask(volatile uint8_t *pinr, uint8_t mask)
 int main(void)
 {
     /* LED output */
-    GPIO_SetMode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);
+    gpio_set_mode(&DDRB, &PORTB, PB5, GPIO_OUTPUT);
 
     /* Button input with pull-up */
-    GPIO_SetMode(&DDRD, &PORTD, PD2, GPIO_INPUT_PULLUP);
+    gpio_set_mode(&DDRD, &PORTD, PD2, GPIO_INPUT_PULLUP);
 
     /* Port-level: set all of PORTC as outputs */
-    GPIO_SetPortMode(&DDRC, 0xFF);
+    gpio_set_port_mode(&DDRC, 0xFF);
 
     while (1) {
         /* Toggle LED */
-        GPIO_TogglePin(&PINB, PB5);
+        gpio_toggle_pin(&PINB, PB5);
 
         /* Read button (active-low) */
-        if (GPIO_ReadPin(&PIND, PD2) == 0) {
-            GPIO_WritePort(&PORTC, 0xAA);   /* pattern on PORTC */
+        if (gpio_read_pin(&PIND, PD2) == 0) {
+            gpio_write_port(&PORTC, 0xAA);   /* pattern on PORTC */
         } else {
-            GPIO_ClearMask(&PORTC, 0xFF);
+            gpio_clear_mask(&PORTC, 0xFF);
         }
 
         _delay_ms(250);

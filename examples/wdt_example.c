@@ -20,74 +20,74 @@ void wdt_interrupt_handler(void)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
 
     /* --- Get reset cause (call once at startup) --- */
-    uint8_t cause = WDT_GetResetCause();
-    UART_SendString("Reset cause: 0x");
-    UART_PrintHex8(cause);
-    UART_SendString("\r\n");
+    uint8_t cause = wdt_get_reset_cause();
+    uart_send_string("Reset cause: 0x");
+    uart_print_hex8(cause);
+    uart_send_string("\r\n");
 
     if (cause & WDT_RESET_POWER_ON)
-        UART_SendString("  Power-on\r\n");
+        uart_send_string("  Power-on\r\n");
     if (cause & WDT_RESET_EXTERNAL)
-        UART_SendString("  External\r\n");
+        uart_send_string("  External\r\n");
     if (cause & WDT_RESET_BROWN_OUT)
-        UART_SendString("  Brown-out\r\n");
+        uart_send_string("  Brown-out\r\n");
     if (cause & WDT_RESET_WATCHDOG)
-        UART_SendString("  Watchdog\r\n");
+        uart_send_string("  Watchdog\r\n");
 
     /* --- LED --- */
     DDRB |= (1 << PB5);
 
     /* --- Mode: System Reset (1s timeout) --- */
-    UART_SendString("WDT Reset mode (1s)\r\n");
-    WDT_Enable(WDT_TIMEOUT_1S, WDT_MODE_RESET);
+    uart_send_string("WDT Reset mode (1s)\r\n");
+    wdt_configure(WDT_TIMEOUT_1S, WDT_MODE_RESET);
 
     for (uint8_t i = 0; i < 3; i++) {
-        WDT_Reset();            /* kick before timeout */
-        UART_SendString("  kick\r\n");
+        wdt_kick();            /* kick before timeout */
+        uart_send_string("  kick\r\n");
         _delay_ms(500);
     }
-    WDT_Disable();
-    UART_SendString("  Disabled OK\r\n");
+    wdt_off();
+    uart_send_string("  Disabled OK\r\n");
 
     /* --- Mode: Interrupt (500ms, periodic) --- */
-    UART_SendString("WDT Interrupt mode\r\n");
-    WDT_SetCallback(wdt_interrupt_handler);
-    WDT_Enable(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
+    uart_send_string("WDT Interrupt mode\r\n");
+    wdt_set_callback(wdt_interrupt_handler);
+    wdt_configure(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
 
     for (uint8_t i = 0; i < 4; i++) {
         while (!wdt_isr_flag);   /* wait for ISR */
         wdt_isr_flag = 0;
         PINB |= (1 << PB5);     /* toggle LED */
-        UART_SendString("  WDT ISR #");
-        UART_PrintU16(i + 1);
-        UART_SendString("\r\n");
+        uart_send_string("  WDT ISR #");
+        uart_print_u16(i + 1);
+        uart_send_string("\r\n");
         /* Re-arm (WDIE auto-clears after ISR) */
-        WDT_Enable(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
+        wdt_configure(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
     }
-    WDT_Disable();
+    wdt_off();
 
     /* --- Mode: Interrupt + Reset (combo) --- */
-    UART_SendString("WDT Int+Reset mode\r\n");
-    WDT_SetCallback(wdt_interrupt_handler);
-    WDT_Enable(WDT_TIMEOUT_2S, WDT_MODE_INT_RESET);
+    uart_send_string("WDT Int+Reset mode\r\n");
+    wdt_set_callback(wdt_interrupt_handler);
+    wdt_configure(WDT_TIMEOUT_2S, WDT_MODE_INT_RESET);
 
     /* First timeout fires ISR, second would reset */
     while (!wdt_isr_flag);
     wdt_isr_flag = 0;
-    UART_SendString("  ISR fired, kicking...\r\n");
-    WDT_Reset();             /* prevent actual reset */
-    WDT_Disable();
+    uart_send_string("  ISR fired, kicking...\r\n");
+    wdt_kick();             /* prevent actual reset */
+    wdt_off();
 
-    UART_SendString("All tests passed\r\n");
+    uart_send_string("All tests passed\r\n");
 
     /* --- ForceReset demo (commented out to avoid reset loop) --- */
-    /* UART_SendString("Forcing reset...\r\n");
-       UART_FlushTx();
-       WDT_ForceReset(); */
+    /* uart_send_string("Forcing reset...\r\n");
+       uart_flush_tx();
+       wdt_force_reset(); */
 
     while (1) {
         _delay_ms(1000);

@@ -41,7 +41,7 @@
  * @param  width Number of bits (1-8)
  * @return Extracted field, right-aligned
  */
-static inline uint8_t BITOPS_Extract8(uint8_t val, uint8_t pos, uint8_t width)
+static inline uint8_t bitops_extract8(uint8_t val, uint8_t pos, uint8_t width)
 {
     return (val >> pos) & ((1U << width) - 1);
 }
@@ -54,7 +54,7 @@ static inline uint8_t BITOPS_Extract8(uint8_t val, uint8_t pos, uint8_t width)
  * @param  width   Number of bits
  * @return Modified byte
  */
-static inline uint8_t BITOPS_Insert8(uint8_t target, uint8_t val,
+static inline uint8_t bitops_insert8(uint8_t target, uint8_t val,
                                      uint8_t pos, uint8_t width)
 {
     uint8_t mask = ((1U << width) - 1) << pos;
@@ -64,7 +64,7 @@ static inline uint8_t BITOPS_Insert8(uint8_t target, uint8_t val,
 /**
  * @brief  Extract bit field from a 16-bit value.
  */
-static inline uint16_t BITOPS_Extract16(uint16_t val, uint8_t pos,
+static inline uint16_t bitops_extract16(uint16_t val, uint8_t pos,
                                         uint8_t width)
 {
     return (val >> pos) & ((1UL << width) - 1);
@@ -73,7 +73,7 @@ static inline uint16_t BITOPS_Extract16(uint16_t val, uint8_t pos,
 /**
  * @brief  Insert into a 16-bit bit field.
  */
-static inline uint16_t BITOPS_Insert16(uint16_t target, uint16_t val,
+static inline uint16_t bitops_insert16(uint16_t target, uint16_t val,
                                        uint8_t pos, uint8_t width)
 {
     uint16_t mask = ((1UL << width) - 1) << pos;
@@ -85,7 +85,7 @@ static inline uint16_t BITOPS_Insert16(uint16_t target, uint16_t val,
 /**
  * @brief  Rotate an 8-bit value left by n positions.
  */
-static inline uint8_t BITOPS_RotateLeft8(uint8_t val, uint8_t n)
+static inline uint8_t bitops_rotate_left8(uint8_t val, uint8_t n)
 {
     n &= 7;
     return (val << n) | (val >> (8 - n));
@@ -94,7 +94,7 @@ static inline uint8_t BITOPS_RotateLeft8(uint8_t val, uint8_t n)
 /**
  * @brief  Rotate an 8-bit value right by n positions.
  */
-static inline uint8_t BITOPS_RotateRight8(uint8_t val, uint8_t n)
+static inline uint8_t bitops_rotate_right8(uint8_t val, uint8_t n)
 {
     n &= 7;
     return (val >> n) | (val << (8 - n));
@@ -103,7 +103,7 @@ static inline uint8_t BITOPS_RotateRight8(uint8_t val, uint8_t n)
 /**
  * @brief  Rotate a 16-bit value left by n positions.
  */
-static inline uint16_t BITOPS_RotateLeft16(uint16_t val, uint8_t n)
+static inline uint16_t bitops_rotate_left16(uint16_t val, uint8_t n)
 {
     n &= 15;
     return (val << n) | (val >> (16 - n));
@@ -112,7 +112,7 @@ static inline uint16_t BITOPS_RotateLeft16(uint16_t val, uint8_t n)
 /**
  * @brief  Rotate a 16-bit value right by n positions.
  */
-static inline uint16_t BITOPS_RotateRight16(uint16_t val, uint8_t n)
+static inline uint16_t bitops_rotate_right16(uint16_t val, uint8_t n)
 {
     n &= 15;
     return (val >> n) | (val << (16 - n));
@@ -125,7 +125,7 @@ static inline uint16_t BITOPS_RotateRight16(uint16_t val, uint8_t n)
  *         Uses Brian Kernighan's algorithm.
  * @return Number of 1-bits (0-8)
  */
-static inline uint8_t BITOPS_PopCount8(uint8_t val)
+static inline uint8_t bitops_pop_count8(uint8_t val)
 {
     uint8_t count = 0;
     while (val) {
@@ -138,10 +138,10 @@ static inline uint8_t BITOPS_PopCount8(uint8_t val)
 /**
  * @brief  Count set bits in a 16-bit value.
  */
-static inline uint8_t BITOPS_PopCount16(uint16_t val)
+static inline uint8_t bitops_pop_count16(uint16_t val)
 {
-    return BITOPS_PopCount8((uint8_t)val) +
-           BITOPS_PopCount8((uint8_t)(val >> 8));
+    return bitops_pop_count8((uint8_t)val) +
+           bitops_pop_count8((uint8_t)(val >> 8));
 }
 
 /* ===== LEADING / TRAILING ZEROS ===== */
@@ -150,7 +150,7 @@ static inline uint8_t BITOPS_PopCount16(uint16_t val)
  * @brief  Count leading zeros in an 8-bit value.
  * @return 0-8 (8 if val == 0)
  */
-static inline uint8_t BITOPS_CLZ8(uint8_t val)
+static inline uint8_t bitops_clz8(uint8_t val)
 {
     if (val == 0) return 8;
     uint8_t n = 0;
@@ -164,7 +164,7 @@ static inline uint8_t BITOPS_CLZ8(uint8_t val)
  * @brief  Count trailing zeros in an 8-bit value.
  * @return 0-8 (8 if val == 0)
  */
-static inline uint8_t BITOPS_CTZ8(uint8_t val)
+static inline uint8_t bitops_ctz8(uint8_t val)
 {
     if (val == 0) return 8;
     uint8_t n = 0;
@@ -177,23 +177,23 @@ static inline uint8_t BITOPS_CTZ8(uint8_t val)
 /**
  * @brief  Count leading zeros in a 16-bit value.
  */
-static inline uint8_t BITOPS_CLZ16(uint16_t val)
+static inline uint8_t bitops_clz16(uint16_t val)
 {
     if (val == 0) return 16;
     uint8_t hi = (uint8_t)(val >> 8);
-    if (hi) return BITOPS_CLZ8(hi);
-    return 8 + BITOPS_CLZ8((uint8_t)val);
+    if (hi) return bitops_clz8(hi);
+    return 8 + bitops_clz8((uint8_t)val);
 }
 
 /**
  * @brief  Count trailing zeros in a 16-bit value.
  */
-static inline uint8_t BITOPS_CTZ16(uint16_t val)
+static inline uint8_t bitops_ctz16(uint16_t val)
 {
     if (val == 0) return 16;
     uint8_t lo = (uint8_t)val;
-    if (lo) return BITOPS_CTZ8(lo);
-    return 8 + BITOPS_CTZ8((uint8_t)(val >> 8));
+    if (lo) return bitops_ctz8(lo);
+    return 8 + bitops_ctz8((uint8_t)(val >> 8));
 }
 
 /* ===== BYTE / WORD SWAP ===== */
@@ -201,7 +201,7 @@ static inline uint8_t BITOPS_CTZ16(uint16_t val)
 /**
  * @brief  Reverse the bits in an 8-bit value.
  */
-static inline uint8_t BITOPS_Reverse8(uint8_t val)
+static inline uint8_t bitops_reverse8(uint8_t val)
 {
     val = ((val & 0xF0) >> 4) | ((val & 0x0F) << 4);
     val = ((val & 0xCC) >> 2) | ((val & 0x33) << 2);
@@ -212,7 +212,7 @@ static inline uint8_t BITOPS_Reverse8(uint8_t val)
 /**
  * @brief  Swap the two bytes of a 16-bit value (endianness conversion).
  */
-static inline uint16_t BITOPS_ByteSwap16(uint16_t val)
+static inline uint16_t bitops_byte_swap16(uint16_t val)
 {
     return (val >> 8) | (val << 8);
 }
@@ -220,7 +220,7 @@ static inline uint16_t BITOPS_ByteSwap16(uint16_t val)
 /**
  * @brief  Swap bytes in a 32-bit value.
  */
-static inline uint32_t BITOPS_ByteSwap32(uint32_t val)
+static inline uint32_t bitops_byte_swap32(uint32_t val)
 {
     return ((val & 0xFF000000UL) >> 24) |
            ((val & 0x00FF0000UL) >> 8)  |
@@ -231,7 +231,7 @@ static inline uint32_t BITOPS_ByteSwap32(uint32_t val)
 /**
  * @brief  Swap nibbles in a byte (high ↔ low 4 bits).
  */
-static inline uint8_t BITOPS_NibbleSwap(uint8_t val)
+static inline uint8_t bitops_nibble_swap(uint8_t val)
 {
     return (val >> 4) | (val << 4);
 }
@@ -287,7 +287,7 @@ static const uint8_t _crc8_lut[256] PROGMEM = {
  * @param  len   Number of bytes
  * @return CRC-8 value
  */
-uint8_t BITOPS_CRC8(const uint8_t *data, uint16_t len);
+uint8_t bitops_crc8(const uint8_t *data, uint16_t len);
 
 /**
  * @brief  Update a running CRC-8 with one byte.
@@ -295,21 +295,21 @@ uint8_t BITOPS_CRC8(const uint8_t *data, uint16_t len);
  * @param  byte  Next data byte
  * @return Updated CRC
  */
-uint8_t BITOPS_CRC8_Update(uint8_t crc, uint8_t byte);
+uint8_t bitops_crc8_update(uint8_t crc, uint8_t byte);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_BITOPS_IMPLEMENTATION
 
-uint8_t BITOPS_CRC8_Update(uint8_t crc, uint8_t byte)
+uint8_t bitops_crc8_update(uint8_t crc, uint8_t byte)
 {
     return pgm_read_byte(&_crc8_lut[crc ^ byte]);
 }
 
-uint8_t BITOPS_CRC8(const uint8_t *data, uint16_t len)
+uint8_t bitops_crc8(const uint8_t *data, uint16_t len)
 {
     uint8_t crc = 0x00;
     for (uint16_t i = 0; i < len; i++)
-        crc = BITOPS_CRC8_Update(crc, data[i]);
+        crc = bitops_crc8_update(crc, data[i]);
     return crc;
 }
 
@@ -326,59 +326,59 @@ uint8_t BITOPS_CRC8(const uint8_t *data, uint16_t len)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
 
     uint8_t val = 0b10110010;
 
     /* Bit field extract: bits [4:2] → 0b100 = 4 */
-    uint8_t field = BITOPS_Extract8(val, 2, 3);
-    UART_SendString("Field [4:2]: ");
-    UART_PrintU16(field);
-    UART_SendString("\r\n");
+    uint8_t field = bitops_extract8(val, 2, 3);
+    uart_send_string("Field [4:2]: ");
+    uart_print_u16(field);
+    uart_send_string("\r\n");
 
     /* Insert 0b111 at [4:2] */
-    val = BITOPS_Insert8(val, 0x07, 2, 3);
-    UART_SendString("After insert: 0x");
-    UART_PrintHex8(val);
-    UART_SendString("\r\n");
+    val = bitops_insert8(val, 0x07, 2, 3);
+    uart_send_string("After insert: 0x");
+    uart_print_hex8(val);
+    uart_send_string("\r\n");
 
     /* Rotate */
-    UART_SendString("RotL 0xA5 by 3: 0x");
-    UART_PrintHex8(BITOPS_RotateLeft8(0xA5, 3));
-    UART_SendString("\r\n");
+    uart_send_string("RotL 0xA5 by 3: 0x");
+    uart_print_hex8(bitops_rotate_left8(0xA5, 3));
+    uart_send_string("\r\n");
 
     /* Population count */
-    UART_SendString("PopCount 0xFF: ");
-    UART_PrintU16(BITOPS_PopCount8(0xFF));
-    UART_SendString("\r\n");
+    uart_send_string("PopCount 0xFF: ");
+    uart_print_u16(bitops_pop_count8(0xFF));
+    uart_send_string("\r\n");
 
     /* CLZ / CTZ */
-    UART_SendString("CLZ(0x08): ");
-    UART_PrintU16(BITOPS_CLZ8(0x08));
-    UART_SendString("  CTZ(0x08): ");
-    UART_PrintU16(BITOPS_CTZ8(0x08));
-    UART_SendString("\r\n");
+    uart_send_string("CLZ(0x08): ");
+    uart_print_u16(bitops_clz8(0x08));
+    uart_send_string("  CTZ(0x08): ");
+    uart_print_u16(bitops_ctz8(0x08));
+    uart_send_string("\r\n");
 
     /* CRC-8 */
     const uint8_t msg[] = {0x01, 0x02, 0x03};
-    uint8_t crc = BITOPS_CRC8(msg, 3);
-    UART_SendString("CRC-8: 0x");
-    UART_PrintHex8(crc);
-    UART_SendString("\r\n");
+    uint8_t crc = bitops_crc8(msg, 3);
+    uart_send_string("CRC-8: 0x");
+    uart_print_hex8(crc);
+    uart_send_string("\r\n");
 
     /* Byte swap */
     uint16_t w = 0x1234;
-    w = BITOPS_ByteSwap16(w);
-    UART_SendString("Swap 0x1234 → 0x");
-    UART_PrintHex8((uint8_t)(w >> 8));
-    UART_PrintHex8((uint8_t)w);
-    UART_SendString("\r\n");
+    w = bitops_byte_swap16(w);
+    uart_send_string("Swap 0x1234 → 0x");
+    uart_print_hex8((uint8_t)(w >> 8));
+    uart_print_hex8((uint8_t)w);
+    uart_send_string("\r\n");
 
     /* Bit reverse */
-    UART_SendString("Reverse 0xA5: 0x");
-    UART_PrintHex8(BITOPS_Reverse8(0xA5));
-    UART_SendString("\r\n");
+    uart_send_string("Reverse 0xA5: 0x");
+    uart_print_hex8(bitops_reverse8(0xA5));
+    uart_send_string("\r\n");
 
     while (1);
     return 0;

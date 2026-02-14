@@ -18,86 +18,86 @@
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
-    UART_SendString("I2C Demo\r\n");
+    uart_send_string("I2C Demo\r\n");
 
     /* --- Init at 100 kHz --- */
-    I2C_Init(I2C_SPEED_100K);
+    i2c_init(I2C_SPEED_100K);
 
     /* --- Bus scan --- */
     uint8_t devices[16];
-    uint8_t n = I2C_Scan(devices);
-    UART_SendString("Scan found ");
-    UART_PrintU16(n);
-    UART_SendString(" device(s):\r\n");
+    uint8_t n = i2c_scan(devices);
+    uart_send_string("Scan found ");
+    uart_print_u16(n);
+    uart_send_string(" device(s):\r\n");
     for (uint8_t i = 0; i < n; i++) {
-        UART_SendString("  0x");
-        UART_PrintHex8(devices[i]);
-        UART_SendString("\r\n");
+        uart_send_string("  0x");
+        uart_print_hex8(devices[i]);
+        uart_send_string("\r\n");
     }
 
     /* --- Low-level: Start, SLA+W, Write, Stop --- */
     i2c_status_e s;
-    s = I2C_Start();
+    s = i2c_start();
     if (s == I2C_OK) {
-        s = I2C_SendAddress_W(MPU6050_ADDR);
+        s = i2c_send_address_w(MPU6050_ADDR);
         if (s == I2C_OK) {
-            I2C_WriteByte(PWR_MGMT_REG);
-            I2C_WriteByte(0x00);  /* wake up */
+            i2c_write_byte(PWR_MGMT_REG);
+            i2c_write_byte(0x00);  /* wake up */
         }
     }
-    I2C_Stop();
+    i2c_stop();
 
     /* --- High-level: WriteRegister --- */
-    I2C_WriteRegister(MPU6050_ADDR, PWR_MGMT_REG, 0x00);
+    i2c_write_register(MPU6050_ADDR, PWR_MGMT_REG, 0x00);
 
     /* --- High-level: ReadRegister --- */
     uint8_t whoami = 0;
-    s = I2C_ReadRegister(MPU6050_ADDR, WHO_AM_I_REG, &whoami);
-    UART_SendString("WHO_AM_I: 0x");
-    UART_PrintHex8(whoami);
-    UART_SendString(" (status=");
-    UART_PrintU16(s);
-    UART_SendString(")\r\n");
+    s = i2c_read_register(MPU6050_ADDR, WHO_AM_I_REG, &whoami);
+    uart_send_string("WHO_AM_I: 0x");
+    uart_print_hex8(whoami);
+    uart_send_string(" (status=");
+    uart_print_u16(s);
+    uart_send_string(")\r\n");
 
     /* --- ReadRegisters (burst 6 bytes – accel XYZ) --- */
     uint8_t accel_data[6];
-    s = I2C_ReadRegisters(MPU6050_ADDR, ACCEL_REG, accel_data, 6);
+    s = i2c_read_registers(MPU6050_ADDR, ACCEL_REG, accel_data, 6);
     if (s == I2C_OK) {
         int16_t ax = (int16_t)((accel_data[0] << 8) | accel_data[1]);
         int16_t ay = (int16_t)((accel_data[2] << 8) | accel_data[3]);
         int16_t az = (int16_t)((accel_data[4] << 8) | accel_data[5]);
-        UART_SendString("AX="); UART_PrintS16(ax);
-        UART_SendString(" AY="); UART_PrintS16(ay);
-        UART_SendString(" AZ="); UART_PrintS16(az);
-        UART_SendString("\r\n");
+        uart_send_string("AX="); uart_print_s16(ax);
+        uart_send_string(" AY="); uart_print_s16(ay);
+        uart_send_string(" AZ="); uart_print_s16(az);
+        uart_send_string("\r\n");
     }
 
     /* --- WriteRegisters (burst write) --- */
     uint8_t config_data[] = {0x00, 0x08};  /* config + gyro config */
-    I2C_WriteRegisters(MPU6050_ADDR, 0x1A, config_data, 2);
+    i2c_write_registers(MPU6050_ADDR, 0x1A, config_data, 2);
 
     /* --- Low-level: Start, SLA+R, Read with ACK/NACK --- */
-    s = I2C_Start();
-    if (s == I2C_OK) s = I2C_SendAddress_W(MPU6050_ADDR);
-    if (s == I2C_OK) s = I2C_WriteByte(ACCEL_REG);
-    if (s == I2C_OK) s = I2C_RepStart();
-    if (s == I2C_OK) s = I2C_SendAddress_R(MPU6050_ADDR);
+    s = i2c_start();
+    if (s == I2C_OK) s = i2c_send_address_w(MPU6050_ADDR);
+    if (s == I2C_OK) s = i2c_write_byte(ACCEL_REG);
+    if (s == I2C_OK) s = i2c_rep_start();
+    if (s == I2C_OK) s = i2c_send_address_r(MPU6050_ADDR);
     if (s == I2C_OK) {
         uint8_t b0, b1;
-        I2C_ReadByte_ACK(&b0);
-        I2C_ReadByte_NACK(&b1);
-        UART_SendString("Raw: 0x");
-        UART_PrintHex8(b0);
-        UART_PrintHex8(b1);
-        UART_SendString("\r\n");
+        i2c_read_byte_ack(&b0);
+        i2c_read_byte_nack(&b1);
+        uart_send_string("Raw: 0x");
+        uart_print_hex8(b0);
+        uart_print_hex8(b1);
+        uart_send_string("\r\n");
     }
-    I2C_Stop();
+    i2c_stop();
 
     /* --- Disable --- */
-    I2C_Disable();
-    UART_SendString("I2C disabled\r\n");
+    i2c_disable();
+    uart_send_string("I2C disabled\r\n");
 
     while (1) {
         _delay_ms(1000);

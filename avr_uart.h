@@ -24,9 +24,9 @@
  *   #include "avr_uart.h"
  *
  *   int main(void) {
- *       UART_Init(9600);
+ *       uart_init(9600);
  *       sei();
- *       UART_SendString("Hello, world!\r\n");
+ *       uart_send_string("Hello, world!\r\n");
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -119,66 +119,66 @@
  * @brief  Initialise USART with given baud rate (8N1, interrupt-driven).
  * @param  baud  Desired baud rate (e.g. 9600, 115200)
  */
-void UART_Init(uint32_t baud);
+void uart_init(uint32_t baud);
 
 /**
  * @brief  Send a single byte (interrupt-driven, returns immediately if room).
  * @param  data  Byte to send
  */
-void UART_SendByte(uint8_t data);
+void uart_send_byte(uint8_t data);
 
 /**
  * @brief  Send a null-terminated string.
  * @param  str  Pointer to C string
  */
-void UART_SendString(const char *str);
+void uart_send_string(const char *str);
 
 /**
  * @brief  Send a buffer of arbitrary bytes.
  * @param  buf  Byte buffer
  * @param  len  Number of bytes
  */
-void UART_SendBuffer(const uint8_t *buf, uint8_t len);
+void uart_send_buffer(const uint8_t *buf, uint8_t len);
 
 /**
  * @brief  Send byte, blocking until TX buffer has room.
  * @param  data  Byte to send
  */
-void UART_SendByteBlocking(uint8_t data);
+void uart_send_byte_blocking(uint8_t data);
 
 /**
  * @brief  Check how many bytes are available in the RX buffer.
  * @return Number of unread bytes
  */
-uint8_t UART_Available(void);
+uint8_t uart_available(void);
 
 /**
  * @brief  Read a byte from the RX buffer (non-blocking).
- * @return Received byte, or 0 if buffer empty (check UART_Available first)
+ * @return Received byte, or 0 if buffer empty (check uart_available first)
  */
-uint8_t UART_ReadByte(void);
+uint8_t uart_read_byte(void);
 
 /**
  * @brief  Read a byte, blocking until one arrives.
  * @return Received byte
  */
-uint8_t UART_ReadByteBlocking(void);
+uint8_t uart_read_byte_blocking(void);
 
 /**
  * @brief  Get and clear accumulated error flags.
  * @return Bitmask of UART_ERR_* flags
  */
-uint8_t UART_GetErrors(void);
+uint8_t uart_get_errors(void);
 
 /**
  * @brief  Flush the TX buffer (block until all bytes sent).
  */
-void UART_FlushTx(void);
+void uart_flush_tx(void);
 
 /**
  * @brief  Discard all data in the RX buffer.
  */
-void UART_FlushRx(void);
+void uart_flush_rx(void);
 
 /**
  * @brief  Get a FILE* suitable for use with fprintf / printf.
@@ -186,28 +186,28 @@ void UART_FlushRx(void);
  * @return Pointer to static FILE structure (valid for lifetime of program).
  *
  * @usage
- *   stdout = UART_GetStream();
+ *   stdout = uart_get_stream();
  *   printf("Value = %d\n", val);
  */
-FILE *UART_GetStream(void);
+FILE *uart_get_stream(void);
 
 /**
  * @brief  Send an unsigned 16-bit integer as ASCII decimal.
  * @param  val  Value to print
  */
-void UART_PrintU16(uint16_t val);
+void uart_print_u16(uint16_t val);
 
 /**
  * @brief  Send a signed 16-bit integer as ASCII decimal.
  * @param  val  Value to print
  */
-void UART_PrintS16(int16_t val);
+void uart_print_s16(int16_t val);
 
 /**
  * @brief  Send an 8-bit value as two ASCII hex digits.
  * @param  val  Value to print
  */
-void UART_PrintHex8(uint8_t val);
+void uart_print_hex8(uint8_t val);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_UART_IMPLEMENTATION
@@ -228,7 +228,7 @@ static volatile uint8_t _uart_errors = UART_ERR_NONE;
 
 /* ---- init ---- */
 
-void UART_Init(uint32_t baud)
+void uart_init(uint32_t baud)
 {
     /* Calculate UBRR with rounding for normal speed */
     uint16_t ubrr = (uint16_t)((F_CPU + 8UL * baud) / (16UL * baud) - 1);
@@ -267,7 +267,7 @@ void UART_Init(uint32_t baud)
 
 /* ---- transmit ---- */
 
-void UART_SendByte(uint8_t data)
+void uart_send_byte(uint8_t data)
 {
     uint8_t next = (_tx_head + 1) & _UART_TX_MASK;
 
@@ -282,24 +282,24 @@ void UART_SendByte(uint8_t data)
     UART_UCSRB |= (1 << UART_UDRIE);
 }
 
-void UART_SendByteBlocking(uint8_t data)
+void uart_send_byte_blocking(uint8_t data)
 {
-    UART_SendByte(data);  /* already blocks if full */
+    uart_send_byte(data);  /* already blocks if full */
 }
 
-void UART_SendString(const char *str)
+void uart_send_string(const char *str)
 {
     while (*str)
-        UART_SendByte((uint8_t)*str++);
+        uart_send_byte((uint8_t)*str++);
 }
 
-void UART_SendBuffer(const uint8_t *buf, uint8_t len)
+void uart_send_buffer(const uint8_t *buf, uint8_t len)
 {
     for (uint8_t i = 0; i < len; i++)
-        UART_SendByte(buf[i]);
+        uart_send_byte(buf[i]);
 }
 
-void UART_FlushTx(void)
+void uart_flush_tx(void)
 {
     while (_tx_head != _tx_tail)
         ;
@@ -307,12 +307,12 @@ void UART_FlushTx(void)
 
 /* ---- receive ---- */
 
-uint8_t UART_Available(void)
+uint8_t uart_available(void)
 {
     return (_rx_head - _rx_tail) & _UART_RX_MASK;
 }
 
-uint8_t UART_ReadByte(void)
+uint8_t uart_read_byte(void)
 {
     if (_rx_head == _rx_tail)
         return 0;
@@ -322,21 +322,21 @@ uint8_t UART_ReadByte(void)
     return data;
 }
 
-uint8_t UART_ReadByteBlocking(void)
+uint8_t uart_read_byte_blocking(void)
 {
     while (_rx_head == _rx_tail)
         ;
-    return UART_ReadByte();
+    return uart_read_byte();
 }
 
-void UART_FlushRx(void)
+void uart_flush_rx(void)
 {
     _rx_tail = _rx_head;
 }
 
 /* ---- errors ---- */
 
-uint8_t UART_GetErrors(void)
+uint8_t uart_get_errors(void)
 {
     uint8_t e = _uart_errors;
     _uart_errors = UART_ERR_NONE;
@@ -349,34 +349,34 @@ static int _uart_putchar(char c, FILE *stream)
 {
     (void)stream;
     if (c == '\n')
-        UART_SendByte('\r');
-    UART_SendByte((uint8_t)c);
+        uart_send_byte('\r');
+    uart_send_byte((uint8_t)c);
     return 0;
 }
 
 static int _uart_getchar(FILE *stream)
 {
     (void)stream;
-    return (int)UART_ReadByteBlocking();
+    return (int)uart_read_byte_blocking();
 }
 
 static FILE _uart_file = FDEV_SETUP_STREAM(_uart_putchar, _uart_getchar,
                                            _FDEV_SETUP_RW);
 
-FILE *UART_GetStream(void)
+FILE *uart_get_stream(void)
 {
     return &_uart_file;
 }
 
 /* ---- convenience print ---- */
 
-void UART_PrintU16(uint16_t val)
+void uart_print_u16(uint16_t val)
 {
     char buf[6];
     int8_t i = 0;
 
     if (val == 0) {
-        UART_SendByte('0');
+        uart_send_byte('0');
         return;
     }
 
@@ -385,23 +385,23 @@ void UART_PrintU16(uint16_t val)
         val /= 10;
     }
     while (--i >= 0)
-        UART_SendByte((uint8_t)buf[i]);
+        uart_send_byte((uint8_t)buf[i]);
 }
 
-void UART_PrintS16(int16_t val)
+void uart_print_s16(int16_t val)
 {
     if (val < 0) {
-        UART_SendByte('-');
+        uart_send_byte('-');
         val = -val;
     }
-    UART_PrintU16((uint16_t)val);
+    uart_print_u16((uint16_t)val);
 }
 
-void UART_PrintHex8(uint8_t val)
+void uart_print_hex8(uint8_t val)
 {
     static const char hex[] = "0123456789ABCDEF";
-    UART_SendByte((uint8_t)hex[val >> 4]);
-    UART_SendByte((uint8_t)hex[val & 0x0F]);
+    uart_send_byte((uint8_t)hex[val >> 4]);
+    uart_send_byte((uint8_t)hex[val & 0x0F]);
 }
 
 /* ---- ISRs ---- */
@@ -450,30 +450,30 @@ ISR(UART_UDRE_vect)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
 
     /* Redirect stdout */
-    stdout = UART_GetStream();
+    stdout = uart_get_stream();
     printf("UART ready @ 9600 baud\n");
 
     /* Send string and hex */
-    UART_SendString("Byte: 0x");
-    UART_PrintHex8(0xAB);
-    UART_SendString("\r\n");
+    uart_send_string("Byte: 0x");
+    uart_print_hex8(0xAB);
+    uart_send_string("\r\n");
 
     /* Echo loop */
     while (1) {
-        if (UART_Available()) {
-            uint8_t c = UART_ReadByte();
-            UART_SendByte(c);           /* echo */
+        if (uart_available()) {
+            uint8_t c = uart_read_byte();
+            uart_send_byte(c);           /* echo */
 
             /* Check for errors */
-            uint8_t err = UART_GetErrors();
+            uint8_t err = uart_get_errors();
             if (err & UART_ERR_FRAME)
-                UART_SendString("[FE]");
+                uart_send_string("[FE]");
             if (err & UART_ERR_OVERRUN)
-                UART_SendString("[OVR]");
+                uart_send_string("[OVR]");
         }
     }
     return 0;

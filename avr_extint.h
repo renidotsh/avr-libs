@@ -23,7 +23,7 @@
  *   void on_button(void) { PINB |= (1 << PB5); }
  *
  *   int main(void) {
- *       EXTINT_Init(EXTINT_INT0, EXTINT_FALLING, on_button);
+ *       extint_init(EXTINT_INT0, EXTINT_FALLING, on_button);
  *       sei();
  *       while(1);
  *   }
@@ -80,14 +80,14 @@ typedef void (*extint_callback_t)(void);
  * @param  sense    Edge / level configuration
  * @param  cb       Callback function (called from ISR context)
  */
-void EXTINT_Init(uint8_t int_id, extint_sense_e sense,
+void extint_init(uint8_t int_id, extint_sense_e sense,
                  extint_callback_t cb);
 
 /**
  * @brief  Disable an external interrupt.
  * @param  int_id  EXTINT_INT0 or EXTINT_INT1
  */
-void EXTINT_Disable(uint8_t int_id);
+void extint_disable(uint8_t int_id);
 
 /**
  * @brief  Enable a Pin-Change Interrupt group and register callback.
@@ -95,27 +95,27 @@ void EXTINT_Disable(uint8_t int_id);
  * @param  mask    Bitmask of pins within that group to enable
  * @param  cb      Callback (called from ISR context)
  */
-void PCINT_Init(uint8_t group, uint8_t mask, extint_callback_t cb);
+void pcint_init(uint8_t group, uint8_t mask, extint_callback_t cb);
 
 /**
  * @brief  Disable a Pin-Change Interrupt group.
  * @param  group  PCINT_GROUP0 / 1 / 2
  */
-void PCINT_Disable(uint8_t group);
+void pcint_disable(uint8_t group);
 
 /**
  * @brief  Add a pin to an already-enabled PCINT group.
  * @param  group  Group ID
  * @param  pin    Pin bit position (0-7)
  */
-void PCINT_EnablePin(uint8_t group, uint8_t pin);
+void pcint_enable_pin(uint8_t group, uint8_t pin);
 
 /**
  * @brief  Remove a pin from a PCINT group.
  * @param  group  Group ID
  * @param  pin    Pin bit position (0-7)
  */
-void PCINT_DisablePin(uint8_t group, uint8_t pin);
+void pcint_disable_pin(uint8_t group, uint8_t pin);
 
 /**
  * @brief  Read a pin with software debounce (blocking).
@@ -125,10 +125,10 @@ void PCINT_DisablePin(uint8_t group, uint8_t pin);
  * @param  pin    Pin number 0-7
  * @return Debounced state: 1 = HIGH, 0 = LOW
  *
- * @note   Requires a working system tick (e.g. TIMER_GetMillis()).
+ * @note   Requires a working system tick (e.g. timer_get_millis()).
  *         If you don't have one you can substitute _delay_ms polling.
  */
-uint8_t EXTINT_Debounce(volatile uint8_t *pinr, uint8_t pin);
+uint8_t extint_debounce(volatile uint8_t *pinr, uint8_t pin);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_EXTINT_IMPLEMENTATION
@@ -141,7 +141,7 @@ static volatile extint_callback_t _pcint2_cb = (void*)0;
 
 /* ---- INT0 / INT1 ---- */
 
-void EXTINT_Init(uint8_t int_id, extint_sense_e sense,
+void extint_init(uint8_t int_id, extint_sense_e sense,
                  extint_callback_t cb)
 {
     if (int_id == EXTINT_INT0) {
@@ -159,7 +159,7 @@ void EXTINT_Init(uint8_t int_id, extint_sense_e sense,
     }
 }
 
-void EXTINT_Disable(uint8_t int_id)
+void extint_disable(uint8_t int_id)
 {
     if (int_id == EXTINT_INT0) {
         EIMSK &= ~(1 << INT0);
@@ -182,7 +182,7 @@ ISR(INT1_vect)
 
 /* ---- Pin-Change Interrupts ---- */
 
-void PCINT_Init(uint8_t group, uint8_t mask, extint_callback_t cb)
+void pcint_init(uint8_t group, uint8_t mask, extint_callback_t cb)
 {
     switch (group) {
         case PCINT_GROUP0:
@@ -208,7 +208,7 @@ void PCINT_Init(uint8_t group, uint8_t mask, extint_callback_t cb)
     }
 }
 
-void PCINT_Disable(uint8_t group)
+void pcint_disable(uint8_t group)
 {
     switch (group) {
         case PCINT_GROUP0:
@@ -231,7 +231,7 @@ void PCINT_Disable(uint8_t group)
     }
 }
 
-void PCINT_EnablePin(uint8_t group, uint8_t pin)
+void pcint_enable_pin(uint8_t group, uint8_t pin)
 {
     switch (group) {
         case PCINT_GROUP0: PCMSK0 |= (1 << pin); break;
@@ -241,7 +241,7 @@ void PCINT_EnablePin(uint8_t group, uint8_t pin)
     }
 }
 
-void PCINT_DisablePin(uint8_t group, uint8_t pin)
+void pcint_disable_pin(uint8_t group, uint8_t pin)
 {
     switch (group) {
         case PCINT_GROUP0: PCMSK0 &= ~(1 << pin); break;
@@ -257,7 +257,7 @@ ISR(PCINT2_vect) { if (_pcint2_cb) _pcint2_cb(); }
 
 /* ---- Debounce helper ---- */
 
-uint8_t EXTINT_Debounce(volatile uint8_t *pinr, uint8_t pin)
+uint8_t extint_debounce(volatile uint8_t *pinr, uint8_t pin)
 {
     /*
      * Simple polling debounce: read pin, wait a short time, confirm.
@@ -313,17 +313,17 @@ int main(void)
     PORTD |= (1 << PD2);              /* pull-up               */
 
     /* Configure INT0 – falling edge */
-    EXTINT_Init(EXTINT_INT0, EXTINT_FALLING, button_isr);
+    extint_init(EXTINT_INT0, EXTINT_FALLING, button_isr);
 
     /* Configure PCINT group 0 – PB0 */
     DDRD &= ~(1 << PD0);
-    PCINT_Init(PCINT_GROUP0, (1 << PCINT0), pcint_handler);
+    pcint_init(PCINT_GROUP0, (1 << PCINT0), pcint_handler);
 
     sei();
 
     while (1) {
         /* Debounced read of PD2 (blocking) */
-        uint8_t btn = EXTINT_Debounce(&PIND, PD2);
+        uint8_t btn = extint_debounce(&PIND, PD2);
         (void)btn;
     }
     return 0;

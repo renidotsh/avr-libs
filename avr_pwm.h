@@ -23,8 +23,8 @@
  *   #include "avr_pwm.h"
  *
  *   int main(void) {
- *       PWM_Init(PWM_CH_OC0A, PWM_FAST, PWM01_PRE_64);
- *       PWM_SetDuty(PWM_CH_OC0A, 50);   // 50 %
+ *       pwm_init(PWM_CH_OC0A, PWM_FAST, PWM01_PRE_64);
+ *       pwm_set_duty(PWM_CH_OC0A, 50);   // 50 %
  *       while(1);
  *   }
  *
@@ -94,9 +94,9 @@ typedef enum {
  *                  PWM2_PRE_* for ch 4-5; cast is fine since the CS
  *                  bit-fields are the same width)
  * @note   Also sets the OC pin as output.  For Timer1, uses 8-bit
- *         top (0x00FF); for custom frequency, use PWM_InitTimer1Freq().
+ *         top (0x00FF); for custom frequency, use pwm_init_timer1_freq().
  */
-void PWM_Init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale);
+void pwm_init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale);
 
 /**
  * @brief  Initialise Timer1 PWM with a custom frequency.
@@ -108,7 +108,7 @@ void PWM_Init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale);
  *                   f_pwm = F_CPU / (prescale * 2 * top)    (phase-correct)
  * @note   OC1A and OC1B share the same frequency (ICR1 is common).
  */
-void PWM_InitTimer1Freq(pwm_mode_e mode, pwm01_prescale_e prescale,
+void pwm_init_timer1_freq(pwm_mode_e mode, pwm01_prescale_e prescale,
                         uint16_t top);
 
 /**
@@ -116,20 +116,20 @@ void PWM_InitTimer1Freq(pwm_mode_e mode, pwm01_prescale_e prescale,
  * @param  ch      Channel
  * @param  percent Duty cycle 0-100
  */
-void PWM_SetDuty(pwm_channel_e ch, uint8_t percent);
+void pwm_set_duty(pwm_channel_e ch, uint8_t percent);
 
 /**
  * @brief  Set raw duty cycle value directly.
  * @param  ch     Channel
  * @param  value  OCRx value (0-255 for 8-bit, 0-TOP for Timer1)
  */
-void PWM_SetDutyRaw(pwm_channel_e ch, uint16_t value);
+void pwm_set_duty_raw(pwm_channel_e ch, uint16_t value);
 
 /**
  * @brief  Stop PWM output on a channel (disconnect OC pin).
  * @param  ch  Channel to stop
  */
-void PWM_Stop(pwm_channel_e ch);
+void pwm_stop(pwm_channel_e ch);
 
 /**
  * @brief  Calculate the PWM frequency for a Timer0/2 channel.
@@ -137,7 +137,7 @@ void PWM_Stop(pwm_channel_e ch);
  * @param  mode      PWM mode
  * @return Frequency in Hz
  */
-uint32_t PWM_CalcFreq8(uint16_t prescale, pwm_mode_e mode);
+uint32_t pwm_calc_freq8(uint16_t prescale, pwm_mode_e mode);
 
 /**
  * @brief  Calculate the PWM frequency for Timer1 with a custom TOP.
@@ -146,7 +146,7 @@ uint32_t PWM_CalcFreq8(uint16_t prescale, pwm_mode_e mode);
  * @param  mode      PWM mode
  * @return Frequency in Hz
  */
-uint32_t PWM_CalcFreq16(uint16_t prescale, uint16_t top, pwm_mode_e mode);
+uint32_t pwm_calc_freq16(uint16_t prescale, uint16_t top, pwm_mode_e mode);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_PWM_IMPLEMENTATION
@@ -176,7 +176,7 @@ static void _pwm_set_oc_output(pwm_channel_e ch)
 
 /* ---- Init ---- */
 
-void PWM_Init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale)
+void pwm_init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale)
 {
     _pwm_set_oc_output(ch);
 
@@ -244,7 +244,7 @@ void PWM_Init(pwm_channel_e ch, pwm_mode_e mode, uint8_t prescale)
     }
 }
 
-void PWM_InitTimer1Freq(pwm_mode_e mode, pwm01_prescale_e prescale,
+void pwm_init_timer1_freq(pwm_mode_e mode, pwm01_prescale_e prescale,
                         uint16_t top)
 {
     TCCR1A = 0;
@@ -271,7 +271,7 @@ void PWM_InitTimer1Freq(pwm_mode_e mode, pwm01_prescale_e prescale,
 
 /* ---- Duty cycle ---- */
 
-void PWM_SetDuty(pwm_channel_e ch, uint8_t percent)
+void pwm_set_duty(pwm_channel_e ch, uint8_t percent)
 {
     if (percent > 100) percent = 100;
 
@@ -282,7 +282,7 @@ void PWM_SetDuty(pwm_channel_e ch, uint8_t percent)
         case PWM_CH_OC2B: {
             /* 8-bit: value = 255 * percent / 100 */
             uint8_t val = (uint8_t)(((uint16_t)percent * 255U) / 100U);
-            PWM_SetDutyRaw(ch, val);
+            pwm_set_duty_raw(ch, val);
             break;
         }
         case PWM_CH_OC1A:
@@ -290,14 +290,14 @@ void PWM_SetDuty(pwm_channel_e ch, uint8_t percent)
             /* 16-bit: value = TOP * percent / 100 */
             uint16_t top = ICR1 ? ICR1 : 0x00FF;
             uint16_t val = (uint16_t)(((uint32_t)percent * top) / 100UL);
-            PWM_SetDutyRaw(ch, val);
+            pwm_set_duty_raw(ch, val);
             break;
         }
         default: break;
     }
 }
 
-void PWM_SetDutyRaw(pwm_channel_e ch, uint16_t value)
+void pwm_set_duty_raw(pwm_channel_e ch, uint16_t value)
 {
     switch (ch) {
         case PWM_CH_OC0A: OCR0A = (uint8_t)value; break;
@@ -312,7 +312,7 @@ void PWM_SetDutyRaw(pwm_channel_e ch, uint16_t value)
 
 /* ---- Stop ---- */
 
-void PWM_Stop(pwm_channel_e ch)
+void pwm_stop(pwm_channel_e ch)
 {
     switch (ch) {
         case PWM_CH_OC0A: TCCR0A &= ~((1 << COM0A1) | (1 << COM0A0)); break;
@@ -327,7 +327,7 @@ void PWM_Stop(pwm_channel_e ch)
 
 /* ---- Frequency calculators ---- */
 
-uint32_t PWM_CalcFreq8(uint16_t prescale, pwm_mode_e mode)
+uint32_t pwm_calc_freq8(uint16_t prescale, pwm_mode_e mode)
 {
     if (prescale == 0) return 0;
     if (mode == PWM_FAST)
@@ -336,7 +336,7 @@ uint32_t PWM_CalcFreq8(uint16_t prescale, pwm_mode_e mode)
         return F_CPU / ((uint32_t)prescale * 510UL);          /* dual-slope */
 }
 
-uint32_t PWM_CalcFreq16(uint16_t prescale, uint16_t top, pwm_mode_e mode)
+uint32_t pwm_calc_freq16(uint16_t prescale, uint16_t top, pwm_mode_e mode)
 {
     if (prescale == 0 || top == 0) return 0;
     if (mode == PWM_FAST)
@@ -357,25 +357,25 @@ uint32_t PWM_CalcFreq16(uint16_t prescale, uint16_t top, pwm_mode_e mode)
 int main(void)
 {
     /* OC0A – Fast PWM, prescaler 64 → ~977 Hz */
-    PWM_Init(PWM_CH_OC0A, PWM_FAST, PWM01_PRE_64);
+    pwm_init(PWM_CH_OC0A, PWM_FAST, PWM01_PRE_64);
 
     /* OC1A – custom frequency via ICR1: 50 Hz for servo */
     /* top = F_CPU / (prescale * freq) - 1 = 16e6 / (8*50) - 1 = 39999 */
-    PWM_InitTimer1Freq(PWM_FAST, PWM01_PRE_8, 39999);
+    pwm_init_timer1_freq(PWM_FAST, PWM01_PRE_8, 39999);
 
     /* OC2B – Phase-correct PWM */
-    PWM_Init(PWM_CH_OC2B, PWM_PHASE_CORRECT, PWM2_PRE_64);
-    PWM_SetDuty(PWM_CH_OC2B, 25);   /* 25 % */
+    pwm_init(PWM_CH_OC2B, PWM_PHASE_CORRECT, PWM2_PRE_64);
+    pwm_set_duty(PWM_CH_OC2B, 25);   /* 25 % */
 
     /* Fade OC0A up and down */
     uint8_t duty = 0;
     int8_t dir = 1;
 
     while (1) {
-        PWM_SetDuty(PWM_CH_OC0A, duty);
+        pwm_set_duty(PWM_CH_OC0A, duty);
         /* Servo: 1ms-2ms pulse for 0-180° (1ms=50/40000*1000≈ */
         /* OCR1A = 2000 .. 4000 for 1ms..2ms @ 50Hz/8pre) */
-        PWM_SetDutyRaw(PWM_CH_OC1A, 2000 + (uint16_t)duty * 20);
+        pwm_set_duty_raw(PWM_CH_OC1A, 2000 + (uint16_t)duty * 20);
 
         duty += dir;
         if (duty >= 100) dir = -1;

@@ -23,8 +23,8 @@
  *   #include "avr_adc.h"
  *
  *   int main(void) {
- *       ADC_Init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
- *       uint16_t val = ADC_ReadChannel(0);
+ *       adc_init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
+ *       uint16_t val = adc_read_channel(0);
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -88,21 +88,21 @@ typedef void (*adc_callback_t)(uint16_t result);
  * @param  ref       Reference voltage selection
  * @param  prescale  Clock prescaler (or ADC_PRESCALE_AUTO)
  */
-void ADC_Init(adc_ref_e ref, adc_prescale_e prescale);
+void adc_init(adc_ref_e ref, adc_prescale_e prescale);
 
 /**
  * @brief  Perform a single blocking 10-bit conversion.
  * @param  channel  ADC channel (0-7, ADC_CH_TEMP, etc.)
  * @return 10-bit result (0-1023)
  */
-uint16_t ADC_ReadChannel(uint8_t channel);
+uint16_t adc_read_channel(uint8_t channel);
 
 /**
  * @brief  Perform a single blocking 8-bit conversion (high byte only).
  * @param  channel  ADC channel
  * @return 8-bit result (right-adjusted high byte)
  */
-uint8_t ADC_ReadChannel8(uint8_t channel);
+uint8_t adc_read_channel8(uint8_t channel);
 
 /**
  * @brief  Perform multiple conversions and return the average.
@@ -110,38 +110,38 @@ uint8_t ADC_ReadChannel8(uint8_t channel);
  * @param  samples  Number of samples to average (1-255)
  * @return Averaged 10-bit result
  */
-uint16_t ADC_ReadAverage(uint8_t channel, uint8_t samples);
+uint16_t adc_read_average(uint8_t channel, uint8_t samples);
 
 /**
  * @brief  Start free-running mode on a given channel.
  * @param  channel   ADC channel
  * @param  callback  Function called from ISR with each result (or NULL)
- * @note   Call sei() after this.  To stop, call ADC_StopFreeRunning().
+ * @note   Call sei() after this.  To stop, call adc_stop_free_running().
  */
-void ADC_StartFreeRunning(uint8_t channel, adc_callback_t callback);
+void adc_start_free_running(uint8_t channel, adc_callback_t callback);
 
 /**
  * @brief  Stop free-running conversions and disable ADC interrupt.
  */
-void ADC_StopFreeRunning(void);
+void adc_stop_free_running(void);
 
 /**
  * @brief  Read the latest free-running result.
  * @return Most recent 10-bit ADC result
  */
-uint16_t ADC_GetLastResult(void);
+uint16_t adc_get_last_result(void);
 
 /**
  * @brief  Change the reference voltage at runtime.
  * @param  ref  New reference voltage
  * @note   After changing, first conversion may be inaccurate (discard it).
  */
-void ADC_SetReference(adc_ref_e ref);
+void adc_set_reference(adc_ref_e ref);
 
 /**
  * @brief  Disable the ADC to save power.
  */
-void ADC_Disable(void);
+void adc_disable(void);
 
 /**
  * @brief  Convert a 10-bit ADC value to millivolts.
@@ -149,7 +149,7 @@ void ADC_Disable(void);
  * @param  ref_mV    Reference voltage in millivolts (e.g. 5000, 3300, 1100)
  * @return Voltage in millivolts
  */
-uint16_t ADC_ToMillivolts(uint16_t raw, uint16_t ref_mV);
+uint16_t adc_to_millivolts(uint16_t raw, uint16_t ref_mV);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_ADC_IMPLEMENTATION
@@ -177,7 +177,7 @@ static uint8_t _adc_auto_prescaler(void)
 
 /* ---- init ---- */
 
-void ADC_Init(adc_ref_e ref, adc_prescale_e prescale)
+void adc_init(adc_ref_e ref, adc_prescale_e prescale)
 {
     _adc_ref_bits = ((uint8_t)ref & 0x03) << REFS0;
 
@@ -199,7 +199,7 @@ void ADC_Init(adc_ref_e ref, adc_prescale_e prescale)
 
 /* ---- single shot ---- */
 
-uint16_t ADC_ReadChannel(uint8_t channel)
+uint16_t adc_read_channel(uint8_t channel)
 {
     /* Select channel (lower 4 bits of ADMUX) */
     ADMUX = _adc_ref_bits | (channel & 0x0F);
@@ -217,7 +217,7 @@ uint16_t ADC_ReadChannel(uint8_t channel)
     return result;
 }
 
-uint8_t ADC_ReadChannel8(uint8_t channel)
+uint8_t adc_read_channel8(uint8_t channel)
 {
     /* Left-adjust for 8-bit mode */
     ADMUX = _adc_ref_bits | (1 << ADLAR) | (channel & 0x0F);
@@ -233,17 +233,17 @@ uint8_t ADC_ReadChannel8(uint8_t channel)
     return result;
 }
 
-uint16_t ADC_ReadAverage(uint8_t channel, uint8_t samples)
+uint16_t adc_read_average(uint8_t channel, uint8_t samples)
 {
     uint32_t sum = 0;
     for (uint8_t i = 0; i < samples; i++)
-        sum += ADC_ReadChannel(channel);
+        sum += adc_read_channel(channel);
     return (uint16_t)(sum / samples);
 }
 
 /* ---- free running ---- */
 
-void ADC_StartFreeRunning(uint8_t channel, adc_callback_t callback)
+void adc_start_free_running(uint8_t channel, adc_callback_t callback)
 {
     _adc_callback = callback;
 
@@ -261,13 +261,13 @@ void ADC_StartFreeRunning(uint8_t channel, adc_callback_t callback)
     ADCSRA |= (1 << ADSC);
 }
 
-void ADC_StopFreeRunning(void)
+void adc_stop_free_running(void)
 {
     ADCSRA &= ~((1 << ADATE) | (1 << ADIE));
     _adc_callback = (void*)0;
 }
 
-uint16_t ADC_GetLastResult(void)
+uint16_t adc_get_last_result(void)
 {
     uint16_t r;
     uint8_t sreg = SREG;
@@ -279,18 +279,18 @@ uint16_t ADC_GetLastResult(void)
 
 /* ---- helpers ---- */
 
-void ADC_SetReference(adc_ref_e ref)
+void adc_set_reference(adc_ref_e ref)
 {
     _adc_ref_bits = ((uint8_t)ref & 0x03) << REFS0;
     ADMUX = (ADMUX & 0x3F) | _adc_ref_bits;
 }
 
-void ADC_Disable(void)
+void adc_disable(void)
 {
     ADCSRA &= ~(1 << ADEN);
 }
 
-uint16_t ADC_ToMillivolts(uint16_t raw, uint16_t ref_mV)
+uint16_t adc_to_millivolts(uint16_t raw, uint16_t ref_mV)
 {
     return (uint16_t)(((uint32_t)raw * ref_mV) / 1023UL);
 }
@@ -328,45 +328,45 @@ void adc_free_run_cb(uint16_t result)
 
 int main(void)
 {
-    UART_Init(9600);
-    ADC_Init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
+    uart_init(9600);
+    adc_init(ADC_REF_AVCC, ADC_PRESCALE_AUTO);
     sei();
 
-    UART_SendString("ADC Demo\r\n");
+    uart_send_string("ADC Demo\r\n");
 
     /* Single-shot read */
-    uint16_t val = ADC_ReadChannel(ADC_CH0);
-    UART_SendString("CH0: ");
-    UART_PrintU16(val);
-    UART_SendString("\r\n");
+    uint16_t val = adc_read_channel(ADC_CH0);
+    uart_send_string("CH0: ");
+    uart_print_u16(val);
+    uart_send_string("\r\n");
 
     /* 8-bit mode */
-    uint8_t val8 = ADC_ReadChannel8(ADC_CH1);
-    UART_SendString("CH1 (8-bit): ");
-    UART_PrintU16(val8);
-    UART_SendString("\r\n");
+    uint8_t val8 = adc_read_channel8(ADC_CH1);
+    uart_send_string("CH1 (8-bit): ");
+    uart_print_u16(val8);
+    uart_send_string("\r\n");
 
     /* Averaged read */
-    uint16_t avg = ADC_ReadAverage(ADC_CH0, 16);
-    UART_SendString("CH0 avg(16): ");
-    UART_PrintU16(avg);
-    UART_SendString("\r\n");
+    uint16_t avg = adc_read_average(ADC_CH0, 16);
+    uart_send_string("CH0 avg(16): ");
+    uart_print_u16(avg);
+    uart_send_string("\r\n");
 
     /* Millivolt conversion */
-    uint16_t mv = ADC_ToMillivolts(avg, 5000);
-    UART_SendString("CH0 mV: ");
-    UART_PrintU16(mv);
-    UART_SendString("\r\n");
+    uint16_t mv = adc_to_millivolts(avg, 5000);
+    uart_send_string("CH0 mV: ");
+    uart_print_u16(mv);
+    uart_send_string("\r\n");
 
     /* Free-running mode */
-    ADC_StartFreeRunning(ADC_CH0, adc_free_run_cb);
+    adc_start_free_running(ADC_CH0, adc_free_run_cb);
 
     while (1) {
         _delay_ms(500);
-        uint16_t r = ADC_GetLastResult();
-        UART_SendString("FR: ");
-        UART_PrintU16(r);
-        UART_SendString("\r\n");
+        uint16_t r = adc_get_last_result();
+        uart_send_string("FR: ");
+        uart_print_u16(r);
+        uart_send_string("\r\n");
     }
     return 0;
 }

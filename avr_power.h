@@ -23,10 +23,10 @@
  *   #include "avr_power.h"
  *
  *   int main(void) {
- *       POWER_DisablePeripheral(POWER_ADC);
- *       POWER_SetSleepMode(POWER_SLEEP_IDLE);
+ *       power_disable_peripheral(POWER_ADC);
+ *       power_set_sleep_mode(POWER_SLEEP_IDLE);
  *       sei();
- *       POWER_EnterSleep();
+ *       power_enter_sleep();
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -78,20 +78,20 @@ typedef enum {
  * @brief  Select a sleep mode (does NOT enter sleep yet).
  * @param  mode  One of the POWER_SLEEP_* values
  */
-void POWER_SetSleepMode(power_sleep_e mode);
+void power_set_sleep_mode(power_sleep_e mode);
 
 /**
  * @brief  Enter the currently-selected sleep mode.
  *         CPU halts until a configured wake-up interrupt fires.
  * @note   Interrupts must be globally enabled (sei()) before calling.
  */
-void POWER_EnterSleep(void);
+void power_enter_sleep(void);
 
 /**
  * @brief  Convenience: set mode + enter sleep in one call.
  * @param  mode  Sleep mode
  */
-void POWER_Sleep(power_sleep_e mode);
+void power_sleep(power_sleep_e mode);
 
 /**
  * @brief  Enter Power-down sleep with Brown-Out Detector disabled.
@@ -99,7 +99,7 @@ void POWER_Sleep(power_sleep_e mode);
  * @note   Only effective on devices with software BOD disable
  *         (ATmega328P and similar).
  */
-void POWER_DeepSleep(void);
+void power_deep_sleep(void);
 
 /**
  * @brief  Disable a peripheral via the Power Reduction Register.
@@ -107,40 +107,40 @@ void POWER_DeepSleep(void);
  *         undefined until re-enabled.
  * @param  periph  Peripheral to disable (POWER_ADC, POWER_SPI, etc.)
  */
-void POWER_DisablePeripheral(power_periph_e periph);
+void power_disable_peripheral(power_periph_e periph);
 
 /**
  * @brief  Re-enable a peripheral that was disabled via PRR.
  * @param  periph  Peripheral to enable
  */
-void POWER_EnablePeripheral(power_periph_e periph);
+void power_enable_peripheral(power_periph_e periph);
 
 /**
  * @brief  Disable all peripherals (maximum power savings).
- *         Call POWER_EnablePeripheral() for each peripheral you need.
+ *         Call power_enable_peripheral() for each peripheral you need.
  */
-void POWER_DisableAllPeripherals(void);
+void power_disable_all_peripherals(void);
 
 /**
  * @brief  Enable all peripherals (default state after reset).
  */
-void POWER_EnableAllPeripherals(void);
+void power_enable_all_peripherals(void);
 
 /**
  * @brief  Check if a peripheral is currently enabled.
  * @return true if enabled
  */
-bool POWER_IsPeripheralEnabled(power_periph_e periph);
+bool power_is_peripheral_enabled(power_periph_e periph);
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_POWER_IMPLEMENTATION
 
-void POWER_SetSleepMode(power_sleep_e mode)
+void power_set_sleep_mode(power_sleep_e mode)
 {
     set_sleep_mode((uint8_t)mode);
 }
 
-void POWER_EnterSleep(void)
+void power_enter_sleep(void)
 {
     sleep_enable();
     sei();           /* ensure interrupts are on */
@@ -148,15 +148,15 @@ void POWER_EnterSleep(void)
     sleep_disable(); /* disable sleep immediately after waking */
 }
 
-void POWER_Sleep(power_sleep_e mode)
+void power_sleep(power_sleep_e mode)
 {
-    POWER_SetSleepMode(mode);
-    POWER_EnterSleep();
+    power_set_sleep_mode(mode);
+    power_enter_sleep();
 }
 
-void POWER_DeepSleep(void)
+void power_deep_sleep(void)
 {
-    POWER_SetSleepMode(POWER_SLEEP_POWER_DOWN);
+    power_set_sleep_mode(POWER_SLEEP_POWER_DOWN);
     sleep_enable();
 
 #if defined(BODS) && defined(BODSE)
@@ -181,7 +181,7 @@ void POWER_DeepSleep(void)
     sleep_disable();
 }
 
-void POWER_DisablePeripheral(power_periph_e periph)
+void power_disable_peripheral(power_periph_e periph)
 {
 #if defined(PRR)
     PRR |= (1 << (uint8_t)periph);
@@ -190,7 +190,7 @@ void POWER_DisablePeripheral(power_periph_e periph)
 #endif
 }
 
-void POWER_EnablePeripheral(power_periph_e periph)
+void power_enable_peripheral(power_periph_e periph)
 {
 #if defined(PRR)
     PRR &= ~(1 << (uint8_t)periph);
@@ -199,7 +199,7 @@ void POWER_EnablePeripheral(power_periph_e periph)
 #endif
 }
 
-void POWER_DisableAllPeripherals(void)
+void power_disable_all_peripherals(void)
 {
 #if defined(PRR)
     PRR = 0xFF;
@@ -208,7 +208,7 @@ void POWER_DisableAllPeripherals(void)
 #endif
 }
 
-void POWER_EnableAllPeripherals(void)
+void power_enable_all_peripherals(void)
 {
 #if defined(PRR)
     PRR = 0x00;
@@ -217,7 +217,7 @@ void POWER_EnableAllPeripherals(void)
 #endif
 }
 
-bool POWER_IsPeripheralEnabled(power_periph_e periph)
+bool power_is_peripheral_enabled(power_periph_e periph)
 {
 #if defined(PRR)
     return !(PRR & (1 << (uint8_t)periph));
@@ -258,26 +258,26 @@ int main(void)
     PORTB &= ~(1 << PB5);
 
     /* Disable unused peripherals */
-    POWER_DisablePeripheral(POWER_ADC);
-    POWER_DisablePeripheral(POWER_SPI);
-    POWER_DisablePeripheral(POWER_TWI);
-    POWER_DisablePeripheral(POWER_USART);
-    POWER_DisablePeripheral(POWER_TIMER1);
-    POWER_DisablePeripheral(POWER_TIMER2);
+    power_disable_peripheral(POWER_ADC);
+    power_disable_peripheral(POWER_SPI);
+    power_disable_peripheral(POWER_TWI);
+    power_disable_peripheral(POWER_USART);
+    power_disable_peripheral(POWER_TIMER1);
+    power_disable_peripheral(POWER_TIMER2);
 
     /* Use WDT interrupt to wake every ~8 s */
-    WDT_SetCallback(wdt_wake);
-    WDT_Enable(WDT_TIMEOUT_8S, WDT_MODE_INTERRUPT);
+    wdt_set_callback(wdt_wake);
+    wdt_configure(WDT_TIMEOUT_8S, WDT_MODE_INTERRUPT);
     sei();
 
     while (1) {
-        POWER_DeepSleep();
+        power_deep_sleep();
 
         if (woke_up) {
             woke_up = 0;
             PINB |= (1 << PB5);  /* toggle LED */
             /* Re-arm WDT interrupt */
-            WDT_Enable(WDT_TIMEOUT_8S, WDT_MODE_INTERRUPT);
+            wdt_configure(WDT_TIMEOUT_8S, WDT_MODE_INTERRUPT);
         }
     }
     return 0;

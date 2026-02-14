@@ -24,8 +24,8 @@
  *   #include "avr_wdt.h"
  *
  *   int main(void) {
- *       WDT_Enable(WDT_TIMEOUT_1S, WDT_MODE_RESET);
- *       while (1) { WDT_Reset(); }
+ *       wdt_configure(WDT_TIMEOUT_1S, WDT_MODE_RESET);
+ *       while (1) { wdt_kick(); }
  *   }
  *
  * @target   ATmega328P, ATmega2560, ATmega32U4
@@ -79,19 +79,19 @@ typedef void (*wdt_callback_t)(void);
  * @param  timeout  Timeout period
  * @param  mode     Operating mode (reset / interrupt / both)
  */
-void WDT_Enable(wdt_timeout_e timeout, wdt_mode_e mode);
+void wdt_configure(wdt_timeout_e timeout, wdt_mode_e mode);
 
 /**
  * @brief  Disable the watchdog timer (timed sequence).
  * @note   Must be called within 4 clock cycles of setting WDCE.
  */
-void WDT_Disable(void);
+void wdt_off(void);
 
 /**
  * @brief  Reset (kick) the watchdog counter.
  *         Call this periodically to prevent watchdog timeout.
  */
-static inline void WDT_Reset(void)
+static inline void wdt_kick(void)
 {
     wdt_reset();
 }
@@ -100,33 +100,33 @@ static inline void WDT_Reset(void)
  * @brief  Register a callback for WDT interrupt mode.
  * @param  cb  Function to call from WDT ISR (or NULL)
  */
-void WDT_SetCallback(wdt_callback_t cb);
+void wdt_set_callback(wdt_callback_t cb);
 
 /**
  * @brief  Read the reset cause from MCUSR.
  * @return Bitmask of WDT_RESET_* flags
  * @note   Clears MCUSR after reading.  Call once at startup.
  */
-uint8_t WDT_GetResetCause(void);
+uint8_t wdt_get_reset_cause(void);
 
 /**
  * @brief  Force an immediate system reset via the watchdog.
  *         Enables WDT with shortest timeout and enters infinite loop.
  */
-void WDT_ForceReset(void) __attribute__((noreturn));
+void wdt_force_reset(void) __attribute__((noreturn));
 
 /* ===== IMPLEMENTATION ===== */
 #ifdef AVR_WDT_IMPLEMENTATION
 
 static volatile wdt_callback_t _wdt_cb = (void*)0;
 
-void WDT_Enable(wdt_timeout_e timeout, wdt_mode_e mode)
+void wdt_configure(wdt_timeout_e timeout, wdt_mode_e mode)
 {
     uint8_t wdp  = (uint8_t)timeout;
     uint8_t sreg = SREG;
     cli();
 
-    WDT_Reset();
+    wdt_kick();
 
     /*
      * Timed sequence (datasheet §11.8.2):
@@ -162,12 +162,12 @@ void WDT_Enable(wdt_timeout_e timeout, wdt_mode_e mode)
     SREG = sreg;
 }
 
-void WDT_Disable(void)
+void wdt_off(void)
 {
     uint8_t sreg = SREG;
     cli();
 
-    WDT_Reset();
+    wdt_kick();
 
     /* Clear WDRF in MCUSR – required to disable WDT */
     MCUSR &= ~(1 << WDRF);
@@ -179,22 +179,22 @@ void WDT_Disable(void)
     SREG = sreg;
 }
 
-void WDT_SetCallback(wdt_callback_t cb)
+void wdt_set_callback(wdt_callback_t cb)
 {
     _wdt_cb = cb;
 }
 
-uint8_t WDT_GetResetCause(void)
+uint8_t wdt_get_reset_cause(void)
 {
     uint8_t cause = MCUSR;
     MCUSR = 0;      /* clear for next detection */
     return cause;
 }
 
-void WDT_ForceReset(void)
+void wdt_force_reset(void)
 {
     cli();
-    WDT_Enable(WDT_TIMEOUT_15MS, WDT_MODE_RESET);
+    wdt_configure(WDT_TIMEOUT_15MS, WDT_MODE_RESET);
     while (1)
         ;  /* wait for reset */
 }
@@ -224,41 +224,41 @@ void wdt_handler(void)
 
 int main(void)
 {
-    UART_Init(9600);
+    uart_init(9600);
     sei();
 
     /* Check reset cause */
-    uint8_t cause = WDT_GetResetCause();
-    UART_SendString("Reset cause: 0x");
-    UART_PrintHex8(cause);
-    UART_SendString("\r\n");
+    uint8_t cause = wdt_get_reset_cause();
+    uart_send_string("Reset cause: 0x");
+    uart_print_hex8(cause);
+    uart_send_string("\r\n");
 
     if (cause & WDT_RESET_WATCHDOG)
-        UART_SendString("  -> Watchdog reset!\r\n");
+        uart_send_string("  -> Watchdog reset!\r\n");
 
     /* --- Mode 1: Reset mode --- */
-    UART_SendString("WDT reset mode (1s)\r\n");
-    WDT_Enable(WDT_TIMEOUT_1S, WDT_MODE_RESET);
+    uart_send_string("WDT reset mode (1s)\r\n");
+    wdt_configure(WDT_TIMEOUT_1S, WDT_MODE_RESET);
     for (uint8_t i = 0; i < 5; i++) {
-        WDT_Reset();            /* kick the dog */
-        UART_SendString("Kick\r\n");
+        wdt_kick();            /* kick the dog */
+        uart_send_string("Kick\r\n");
         /* _delay_ms(500) equivalent busy loop */
         for (volatile uint32_t d = 0; d < 800000UL; d++);
     }
-    WDT_Disable();
-    UART_SendString("WDT disabled\r\n");
+    wdt_off();
+    uart_send_string("WDT disabled\r\n");
 
     /* --- Mode 2: Interrupt mode --- */
-    UART_SendString("WDT interrupt mode (500ms)\r\n");
-    WDT_SetCallback(wdt_handler);
-    WDT_Enable(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
+    uart_send_string("WDT interrupt mode (500ms)\r\n");
+    wdt_set_callback(wdt_handler);
+    wdt_configure(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
 
     while (1) {
         if (wdt_fired) {
             wdt_fired = 0;
-            UART_SendString("WDT ISR\r\n");
+            uart_send_string("WDT ISR\r\n");
             /* Re-enable WDIE (cleared after ISR fires) */
-            WDT_Enable(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
+            wdt_configure(WDT_TIMEOUT_500MS, WDT_MODE_INTERRUPT);
         }
     }
     return 0;

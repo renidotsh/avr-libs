@@ -38,22 +38,22 @@ int main(void)
     /* INT0 on PD2 – falling edge */
     DDRD  &= ~(1 << PD2);
     PORTD |=  (1 << PD2);  /* pull-up */
-    EXTINT_Init(EXTINT_INT0, EXTINT_FALLING, int0_handler);
+    extint_init(EXTINT_INT0, EXTINT_FALLING, int0_handler);
 
     /* INT1 on PD3 – rising edge */
     DDRD  &= ~(1 << PD3);
     PORTD |=  (1 << PD3);
-    EXTINT_Init(EXTINT_INT1, EXTINT_RISING, int1_handler);
+    extint_init(EXTINT_INT1, EXTINT_RISING, int1_handler);
 
     /* PCINT group 0: PB0 (PCINT0) */
     DDRB  &= ~(1 << PB0);
     PORTB |=  (1 << PB0);
-    PCINT_Init(PCINT_GROUP0, (1 << PCINT0), pcint0_handler);
+    pcint_init(PCINT_GROUP0, (1 << PCINT0), pcint0_handler);
 
     /* Enable additional pin in same group */
     DDRB  &= ~(1 << PB1);
     PORTB |=  (1 << PB1);
-    PCINT_EnablePin(PCINT_GROUP0, PCINT1);
+    pcint_enable_pin(PCINT_GROUP0, PCINT1);
 
     sei();
 
@@ -63,7 +63,7 @@ int main(void)
         if (int0_flag) {
             int0_flag = 0;
             /* Debounced re-read */
-            uint8_t stable = EXTINT_Debounce(&PIND, PD2);
+            uint8_t stable = extint_debounce(&PIND, PD2);
             if (stable == 0) {
                 PINB |= (1 << PB3);  /* confirmed press */
             }
@@ -79,10 +79,10 @@ int main(void)
     }
 
     /* --- Disable demos (unreachable, for API coverage) --- */
-    EXTINT_Disable(EXTINT_INT0);
-    EXTINT_Disable(EXTINT_INT1);
-    PCINT_DisablePin(PCINT_GROUP0, PCINT1);
-    PCINT_Disable(PCINT_GROUP0);
+    extint_disable(EXTINT_INT0);
+    extint_disable(EXTINT_INT1);
+    pcint_disable_pin(PCINT_GROUP0, PCINT1);
+    pcint_disable(PCINT_GROUP0);
 
     return 0;
 }
